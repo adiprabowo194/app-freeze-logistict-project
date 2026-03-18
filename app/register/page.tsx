@@ -38,11 +38,11 @@ export default function Page() {
           </p>
 
           <Link
-            href="https://www.freezelogistics.au"
+            href="https://freezelogistics.com.au"
             target="_blank"
             className="text-xl opacity-80 hover:underline"
           >
-            www.freezelogistics.au
+            www.freezelogistics.com.au
           </Link>
         </div>
       </div>
@@ -53,7 +53,7 @@ export default function Page() {
           {/* Back */}
           <Link
             href="/login"
-            className="text-sm font-bold text-gray-500 hover:underline"
+            className="text-xs font-bold text-gray-500 hover:underline"
           >
             <i className="ri-arrow-left-s-fill"></i> back to login
           </Link>
@@ -63,18 +63,18 @@ export default function Page() {
             <h2 className="text-2xl font-semibold text-gray-800">
               Register Customer
             </h2>
-            <p className="text-sm text-gray-400 mt-2">
+            <p className="text-xs text-gray-400 mt-1">
               pleas fill above input form your biodata company
             </p>
           </div>
 
           {/* FORM */}
-          <form className="space-y-3">
+          <form className="space-y-2">
             <InputField
               label="Company Name"
               name="companyName"
               placeholder="PT. Corp Company"
-              className="rounded-full text-sm"
+              className="rounded-full text-xs"
             />
 
             <div className="grid grid-cols-2 gap-4">
@@ -82,35 +82,35 @@ export default function Page() {
                 label="Email"
                 name="email"
                 placeholder="youremail@gmail.com"
-                className="rounded-full text-sm"
+                className="rounded-full text-xs"
               />
 
               <InputField
                 label="Website"
                 name="website"
                 placeholder="www.corp-company.com"
-                className="rounded-full text-sm"
+                className="rounded-full text-xs"
               />
 
               <InputField
                 label="Contact Name"
                 name="contactName"
                 placeholder="Your Name"
-                className="rounded-full text-sm"
+                className="rounded-full text-xs"
               />
 
               <InputField
                 label="Contact No."
                 name="contactNo"
                 placeholder="+21 800 xxxx"
-                className="rounded-full text-sm"
+                className="rounded-full text-xs"
               />
 
               <SelectField
                 label="State"
                 name="state"
                 placeholder="Northern Territory"
-                className="rounded-full text-sm"
+                className="rounded-full text-xs"
                 options={[
                   { label: "Northern Territory", value: "nt" },
                   { label: "Victoria", value: "vic" },
@@ -121,7 +121,7 @@ export default function Page() {
                 label="Suburb"
                 name="suburb"
                 placeholder="Darwin City"
-                className="rounded-full text-sm"
+                className="rounded-full text-xs"
                 options={[
                   { label: "Darwin City", value: "darwin" },
                   { label: "Sydney", value: "sydney" },
@@ -134,7 +134,7 @@ export default function Page() {
               name="companyAddress"
               rows={2}
               placeholder="Full Street Address"
-              className="rounded-2xl text-sm"
+              className="rounded-2xl text-xs"
             />
 
             {/* Submit */}

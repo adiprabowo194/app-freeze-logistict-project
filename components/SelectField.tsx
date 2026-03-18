@@ -27,7 +27,7 @@ const SelectField: React.FC<SelectFieldProps> = ({
   return (
     <div className="flex flex-col gap-2 w-full">
       {label && (
-        <label htmlFor={name} className="text-sm font-medium text-gray-700">
+        <label htmlFor={name} className="text-xs font-medium text-gray-700">
           {label} {required && <span className="text-red-500">*</span>}
         </label>
       )}
@@ -63,7 +63,7 @@ const SelectField: React.FC<SelectFieldProps> = ({
         </span>
       </div>
 
-      {error && <span className="text-sm text-red-500">{error}</span>}
+      {error && <span className="text-xs text-red-500">{error}</span>}
     </div>
   );
 };
