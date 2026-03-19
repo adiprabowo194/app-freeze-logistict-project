@@ -1,21 +1,78 @@
 "use client";
 
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { Toaster } from "react-hot-toast";
 import InputField from "@/components/InputField";
-import SelectField from "@/components/SelectField";
+import SelectSearch from "@/components/SelectSearch";
 import TextareaField from "@/components/TextareaField";
 import Button from "@/components/Button";
 import Link from "next/link";
 import Logo from "@/components/Logo";
 
 export default function Page() {
+  const [suburb, setSuburb] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+
+    const form = e.currentTarget;
+
+    const payload = {
+      companyName: (form.companyName as HTMLInputElement).value,
+      email: (form.email as HTMLInputElement).value,
+      website: (form.website as HTMLInputElement).value,
+      contactName: (form.contactName as HTMLInputElement).value,
+      contactNo: (form.contactNo as HTMLInputElement).value,
+      suburb: suburb?.value,
+      companyAddress: (form.companyAddress as HTMLTextAreaElement).value,
+      inputType: 2,
+    };
+
+    try {
+      if (!suburb) {
+        toast.error("Suburb is required");
+        setLoading(false);
+        return;
+      }
+      const res = await fetch("/api/customer-candidates", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.message || "Failed submit data");
+      } else {
+        toast.success("Customer registered successfully");
+
+        // ✅ reset form
+        form.reset();
+
+        // ✅ reset select
+        setSuburb(null);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Something went wrong");
+    }
+
+    setLoading(false);
+  };
+
   return (
-    <div className="flex w-full h-screen overflow-hidden">
-      {/* LEFT BANNER */}
+    <div className="flex flex-col md:flex-row w-full min-h-screen">
+      {/* LEFT */}
       <div
-        className="w-[52%] relative bg-cover bg-center"
+        className="w-full md:w-[52%] h-[300px] md:h-auto relative bg-cover bg-center order-2 md:order-1"
         style={{ backgroundImage: "url('/assets/warehouse.webp')" }}
       >
-        {/* Overlay */}
         <div
           className="absolute inset-0"
           style={{
@@ -24,125 +81,90 @@ export default function Page() {
           }}
         />
 
-        {/* Content */}
-        <div className="relative z-10 flex flex-col justify-end h-full p-12 text-white left-14">
+        <div className="relative z-10 flex flex-col justify-end h-full p-6 md:p-12 text-white">
           <Logo size="sm" textColor="text-white" color="text-white" />
 
-          <h1 className="text-6xl font-bold leading-tight mb-6">
+          <h1 className="text-2xl md:text-6xl font-bold mb-4">
             Why Freeze <br /> Logistics?
           </h1>
 
-          <p className="text-base opacity-90 w-full mb-10">
-            Experience premium chilled and frozen product distribution{" "}
-            <div>with the highest quality standards.</div>
+          <p className="text-sm md:text-base opacity-90 mb-6">
+            Experience premium chilled and frozen product distribution
           </p>
 
           <Link
             href="https://freezelogistics.com.au"
             target="_blank"
-            className="text-xl opacity-80 hover:underline"
+            className="text-sm opacity-80 hover:underline"
           >
             www.freezelogistics.com.au
           </Link>
         </div>
       </div>
 
-      {/* RIGHT FORM */}
-      <div className="w-[48%] bg-[#F4F6FA] h-full overflow-y-auto flex justify-center">
-        <div className="w-full max-w-xl py-12 px-8">
-          {/* Back */}
+      {/* RIGHT */}
+      <div className="w-full md:w-[48%] bg-[#F4F6FA] flex items-center justify-center order-1 md:order-2">
+        <div className="w-full max-w-xl px-6 md:px-8 py-8">
           <Link
             href="/login"
-            className="text-xs font-bold text-gray-500 hover:underline"
+            className="text-xs font-semibold text-gray-500 hover:underline"
           >
-            <i className="ri-arrow-left-s-fill"></i> back to login
+            ← Back to login
           </Link>
 
-          {/* Title */}
-          <div className="mt-4 mb-6">
+          <div className="mt-4 mb-4">
             <h2 className="text-2xl font-semibold text-gray-800">
               Register Customer
             </h2>
-            <p className="text-xs text-gray-400 mt-1">
-              pleas fill above input form your biodata company
+            <p className="text-sm text-gray-400">
+              Please fill the form with your company details
             </p>
           </div>
-
-          {/* FORM */}
-          <form className="space-y-2">
-            <InputField
-              label="Company Name"
-              name="companyName"
-              placeholder="PT. Corp Company"
-              className="rounded-full text-xs"
-            />
-
-            <div className="grid grid-cols-2 gap-4">
+          <Toaster position="top-right" />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <InputField
+                label="Company Name"
+                name="companyName"
+                required={true}
+              />
               <InputField
                 label="Email"
                 name="email"
-                placeholder="youremail@gmail.com"
-                className="rounded-full text-xs"
+                type="email"
+                required={true}
               />
-
-              <InputField
-                label="Website"
-                name="website"
-                placeholder="www.corp-company.com"
-                className="rounded-full text-xs"
-              />
-
+              <InputField label="Website" name="website" required={false} />
               <InputField
                 label="Contact Name"
                 name="contactName"
-                placeholder="Your Name"
-                className="rounded-full text-xs"
+                required={true}
               />
-
               <InputField
                 label="Contact No."
                 name="contactNo"
-                placeholder="+21 800 xxxx"
-                className="rounded-full text-xs"
+                required={true}
               />
 
-              <SelectField
-                label="State"
-                name="state"
-                placeholder="Northern Territory"
-                className="rounded-full text-xs"
-                options={[
-                  { label: "Northern Territory", value: "nt" },
-                  { label: "Victoria", value: "vic" },
-                ]}
-              />
-
-              <SelectField
+              <SelectSearch
                 label="Suburb"
-                name="suburb"
-                placeholder="Darwin City"
-                className="rounded-full text-xs"
-                options={[
-                  { label: "Darwin City", value: "darwin" },
-                  { label: "Sydney", value: "sydney" },
-                ]}
+                value={suburb} // ✅ penting
+                onChange={(val) => setSuburb(val)}
               />
             </div>
 
             <TextareaField
               label="Company Address"
               name="companyAddress"
-              rows={2}
-              placeholder="Full Street Address"
-              className="rounded-2xl text-xs"
+              required={true}
             />
 
-            {/* Submit */}
             <Button
               type="submit"
-              className="w-full rounded-full py-3 bg-gradient-to-r from-blue-500 to-indigo-500"
+              disabled={loading}
+              className="w-full rounded-full py-3 text-sm bg-gradient-to-r from-blue-500 to-indigo-500"
             >
-              Submit
+              {loading ? "Submitting..." : "Submit"}
             </Button>
           </form>
         </div>

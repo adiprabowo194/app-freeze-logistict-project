@@ -1,13 +1,20 @@
 "use client";
+import { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import Link from "next/link";
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 
-import React from "react";
 import Logo from "@/components/Logo";
 import InputField from "@/components/InputField";
 import Button from "@/components/Button";
 
 const Home: React.FC = () => {
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const router = useRouter();
+
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const form = e.currentTarget;
@@ -15,11 +22,39 @@ const Home: React.FC = () => {
     const password = (form.elements.namedItem("password") as HTMLInputElement)
       .value;
 
-    console.log({ email, password });
+    try {
+      setLoading(true);
+
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const result = await res.json();
+
+      if (result.success) {
+        toast.success("Login berhasil 🚀");
+
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 1000);
+      } else {
+        toast.error(result.message || "Login gagal");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Terjadi kesalahan");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-blue-100 font-sans">
+      <Toaster position="top-right" />
       <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-lg space-y-6">
         {/* Logo */}
         <div className="flex justify-center">
@@ -30,6 +65,7 @@ const Home: React.FC = () => {
         <h6 className="text-sm text-gray-600 text-center">
           Portal Booking Cold Freight untuk UKM Australia
         </h6>
+
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <InputField
@@ -48,10 +84,14 @@ const Home: React.FC = () => {
             required
           />
 
-          <Button type="submit">Login</Button>
+          <Button type="submit" disabled={loading}>
+            {loading ? "Loading..." : "Login"}
+          </Button>
+
           <h6 className="text-xl font-semibold text-center text-gray-800">
             or
           </h6>
+
           {/* Register Button */}
           <Link href="/register" className="block">
             <Button

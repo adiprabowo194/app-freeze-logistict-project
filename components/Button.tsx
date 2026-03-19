@@ -5,6 +5,7 @@ type ButtonProps = {
   type?: "button" | "submit" | "reset";
   variant?: "primary" | "secondary" | "danger";
   className?: string;
+  disabled?: boolean; // ✅ FIX
   onClick?: () => void;
 };
 
@@ -13,9 +14,11 @@ const Button: React.FC<ButtonProps> = ({
   type = "button",
   variant = "primary",
   className = "",
+  disabled = false, // ✅ default boolean
   onClick,
 }) => {
-  const base = "w-full py-2 rounded-lg font-semibold transition";
+  const base =
+    "w-full py-2 rounded-lg font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed";
 
   const variants = {
     primary: "bg-blue-500 text-white hover:bg-blue-600",
@@ -27,6 +30,7 @@ const Button: React.FC<ButtonProps> = ({
     <button
       type={type}
       onClick={onClick}
+      disabled={disabled} // ✅ APPLY DI SINI
       className={`${base} ${variants[variant]} ${className}`}
     >
       {children}
