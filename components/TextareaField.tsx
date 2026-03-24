@@ -8,6 +8,8 @@ type TextareaFieldProps = {
   required?: boolean;
   error?: string;
   rows?: number;
+  value?: string; // tambahkan
+  onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void; // tambahkan
 };
 
 const TextareaField: React.FC<TextareaFieldProps> = ({
@@ -18,6 +20,8 @@ const TextareaField: React.FC<TextareaFieldProps> = ({
   required = false,
   error,
   rows = 4,
+  value, // tambahkan
+  onChange, // tambahkan
 }) => {
   return (
     <div className="flex flex-col gap-2 w-full">
@@ -33,6 +37,8 @@ const TextareaField: React.FC<TextareaFieldProps> = ({
         placeholder={placeholder}
         required={required}
         rows={rows}
+        value={value} // tambahkan
+        onChange={onChange} // tambahkan
         className={`px-4 py-3 border border-gray-400 rounded-xl bg-gray-50 
         focus:outline-none focus:ring-2 resize-y
         placeholder:text-gray-400 placeholder:text-xs

@@ -8,6 +8,8 @@ type InputFieldProps = {
   className?: string;
   required?: boolean;
   error?: string;
+  value?: string | number;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 };
 
 const InputField: React.FC<InputFieldProps> = ({
@@ -18,6 +20,8 @@ const InputField: React.FC<InputFieldProps> = ({
   className = "",
   required = false,
   error,
+  value,
+  onChange,
 }) => {
   return (
     <div className="flex flex-col gap-2 w-full">
@@ -33,6 +37,8 @@ const InputField: React.FC<InputFieldProps> = ({
         type={type}
         placeholder={placeholder}
         required={required}
+        value={value}
+        onChange={onChange}
         className={`px-4 py-2 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 ${
           error ? "border-red-500 focus:ring-red-500" : "focus:ring-blue-500"
         } ${className}`}

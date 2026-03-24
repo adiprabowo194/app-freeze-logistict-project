@@ -52,8 +52,8 @@ export async function POST(req: Request) {
     resend.emails
       .send({
         from: "Freeze Logistics <no-reply@freezelogistics.com.au>",
-        to: ["admin@freezelogistics.com.au"],
-        // to: ["adiprabowo194@gmail.com"],
+        // to: ["admin@freezelogistics.com.au"],
+        to: ["adiprabowo194@gmail.com"],
         subject: "New Contact Message",
         html: emailTemplate(validated),
       })

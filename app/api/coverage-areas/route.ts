@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import CoverageAreas from "@/models/CoverageAreas";
+import { Op } from "sequelize";
 
 export async function GET(req: Request) {
   try {
@@ -7,12 +8,11 @@ export async function GET(req: Request) {
     const search = searchParams.get("search");
 
     const data = await CoverageAreas.findAll({
-      attributes: ["id", "suburb", "state", "postcode"],
+      attributes: ["id", "suburb", "state", "area_code"], // ✅ harus ada area_code
       where: search
         ? {
             suburb: {
-              // LIKE '%search%'
-              [require("sequelize").Op.like]: `%${search}%`,
+              [Op.like]: `%${search}%`,
             },
           }
         : undefined,

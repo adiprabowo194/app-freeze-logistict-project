@@ -36,11 +36,12 @@ const Home: React.FC = () => {
       const result = await res.json();
 
       if (result.success) {
-        toast.success("Login berhasil 🚀");
+        toast.success("Login Success 🚀");
+        sessionStorage.setItem("just_login", "true");
 
         setTimeout(() => {
           router.push("/dashboard");
-        }, 1000);
+        }, 500);
       } else {
         toast.error(result.message || "Login gagal");
       }

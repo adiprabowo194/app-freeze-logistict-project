@@ -27,8 +27,9 @@ export default function LogoutButton() {
   return (
     <button
       onClick={handleLogout}
-      className="px-4 py-2 bg-red-500 text-white rounded"
+      className="px-4 py-2 bg-red-500 text-white  gap-2 flex rounded-xl text-xs"
     >
+      <i className="ri-logout-circle-r-line"></i>
       Logout
     </button>
   );

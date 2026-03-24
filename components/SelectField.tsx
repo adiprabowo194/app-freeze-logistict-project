@@ -1,3 +1,4 @@
+// components/SelectField.tsx
 import React from "react";
 
 type Option = {
@@ -13,6 +14,8 @@ type SelectFieldProps = {
   required?: boolean;
   error?: string;
   placeholder?: string;
+  value?: string;
+  onChange?: (value: string) => void;
 };
 
 const SelectField: React.FC<SelectFieldProps> = ({
@@ -23,6 +26,8 @@ const SelectField: React.FC<SelectFieldProps> = ({
   required = false,
   error,
   placeholder = "Select option",
+  value,
+  onChange,
 }) => {
   return (
     <div className="flex flex-col gap-2 w-full">
@@ -31,25 +36,21 @@ const SelectField: React.FC<SelectFieldProps> = ({
           {label} {required && <span className="text-red-500">*</span>}
         </label>
       )}
-
-      {/* Wrapper untuk icon */}
       <div className="relative">
         <select
           id={name}
           name={name}
           required={required}
-          defaultValue=""
+          value={value}
+          onChange={(e) => onChange && onChange(e.target.value)}
           className={`w-full px-4 py-2 border border-gray-400 rounded-xl bg-gray-50 
-        focus:outline-none focus:ring-2 appearance-none pr-10
-        ${error ? "border-red-500 focus:ring-red-500" : "focus:ring-blue-500"}
-        ${className}`}
+            focus:outline-none focus:ring-2 appearance-none pr-10
+            ${error ? "border-red-500 focus:ring-red-500" : "focus:ring-blue-500"}
+            ${className}`}
         >
-          {/* Placeholder */}
           <option value="" disabled hidden>
             {placeholder}
           </option>
-
-          {/* Options */}
           {options.map((item, index) => (
             <option key={index} value={item.value}>
               {item.label}
@@ -57,7 +58,6 @@ const SelectField: React.FC<SelectFieldProps> = ({
           ))}
         </select>
 
-        {/* Arrow Icon */}
         <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
           ▼
         </span>
