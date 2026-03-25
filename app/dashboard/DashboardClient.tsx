@@ -24,6 +24,9 @@ interface Booking {
   id: number;
   connote_no: string;
   cargo_type: string;
+
+  unit?: string; // 🔥 jadi optional
+
   suburb_origin: string;
   suburb_destination: string;
   weight: number;
@@ -31,7 +34,6 @@ interface Booking {
   status: string;
   createdAt: string;
 
-  // 🔥 hasil JOIN
   originArea?: {
     suburb: string;
   };
@@ -40,10 +42,16 @@ interface Booking {
   };
 }
 
+// 🔥 TYPE COLUMN (BIAR GENERIC AMAN)
+type Column<T> = {
+  header: string;
+  accessor?: keyof T;
+  render?: (row: T) => React.ReactNode;
+};
+
 export default function DashboardClient() {
-  // 🔹 DEFAULT DATE (hanya sekali)
   const defaultRange = getLast7DaysRange();
-  // 🔹 STATE
+
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
@@ -51,10 +59,8 @@ export default function DashboardClient() {
   const [startDate, setStartDate] = useState(defaultRange.startDate);
   const [endDate, setEndDate] = useState(defaultRange.endDate);
 
-  // 🔥 debounce biar smooth
   const debouncedSearch = useDebounce(search);
 
-  // 📊 TABLE DATA
   const { data, totalPages, loading } = useQuotes({
     page,
     limit: 5,
@@ -64,7 +70,6 @@ export default function DashboardClient() {
     endDate,
   });
 
-  // 📈 SUMMARY DATA (pakai debounce juga 🔥)
   const {
     active,
     delivered,
@@ -77,12 +82,12 @@ export default function DashboardClient() {
     search: debouncedSearch,
   });
 
-  // 📋 TABLE COLUMNS
-  const columns = [
+  // ✅ FIX TYPE COLUMNS
+  const columns: Column<Booking>[] = [
     { header: "Connote No.", accessor: "connote_no" },
     {
       header: "Origin - Dest",
-      render: (row: Booking) =>
+      render: (row) =>
         `${row.originArea?.suburb || "-"} - ${
           row.destinationArea?.suburb || "-"
         }`,
@@ -93,13 +98,15 @@ export default function DashboardClient() {
     { header: "Qty", accessor: "qty" },
     {
       header: "Created At",
-      render: (row: Booking) => new Date(row.createdAt).toLocaleDateString(),
+      render: (row) =>
+        row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "-",
     },
     {
       header: "Status",
-      render: (row: Booking) => <StatusBadge status={row.status} />,
+      render: (row) => <StatusBadge status={row.status} />,
     },
   ];
+
   const [showAlert, setShowAlert] = useState(false);
 
   useEffect(() => {
@@ -108,12 +115,11 @@ export default function DashboardClient() {
     if (isLogin) {
       setShowAlert(true);
       toast.success("Welcome to dashboard");
-      // hapus flag supaya tidak muncul lagi
       sessionStorage.removeItem("just_login");
 
       const timer = setTimeout(() => {
         setShowAlert(false);
-      }, 3000); // ⏱️ tetap 3 detik
+      }, 3000);
 
       return () => clearTimeout(timer);
     }
@@ -124,7 +130,7 @@ export default function DashboardClient() {
       <TopNavbar />
       <MenuBars />
       <Toaster position="top-right" />
-      {/* div content */}
+
       <div className="p-6 px-16">
         {showAlert && (
           <div className="mx-8 mb-4 flex items-center justify-between rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 shadow-sm">
@@ -137,6 +143,7 @@ export default function DashboardClient() {
             </button>
           </div>
         )}
+
         {/* 📊 SUMMARY */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 px-8">
           {summaryLoading ? (
@@ -174,7 +181,7 @@ export default function DashboardClient() {
         {/* 📦 TABLE */}
         <div className="px-8">
           <div className="bg-white rounded-2xl border shadow-sm p-6">
-            {/* 🔹 HEADER */}
+            {/* HEADER */}
             <div className="mb-4 flex justify-between items-start">
               <div>
                 <h2 className="text-lg font-semibold">Recent Bookings</h2>
@@ -192,24 +199,26 @@ export default function DashboardClient() {
               />
             </div>
 
-            {/* 🔍 FILTER */}
+            {/* FILTER */}
             <TableToolbar
               search={search}
               setSearch={setSearch}
               status={status}
               setStatus={setStatus}
-              setPage={setPage} // 🔥 penting
+              setPage={setPage}
             />
 
-            {/* 📊 TABLE */}
-            <DataTable<Booking> columns={columns} data={data} rowKey="id" />
+            {/* ✅ TABLE FIXED */}
+            <DataTable<Booking>
+              columns={columns}
+              data={data || []}
+              rowKey="id"
+            />
 
-            {/* ⏳ LOADING */}
             {loading && (
               <p className="text-sm text-gray-400 mt-2">Loading...</p>
             )}
 
-            {/* 📄 PAGINATION */}
             <Pagination page={page} totalPages={totalPages} setPage={setPage} />
           </div>
         </div>

@@ -17,7 +17,8 @@ function MenuBars() {
     width: 0,
   });
 
-  const menuRefs = useRef<(HTMLLIElement | null)[]>([]);
+  // 🔥 FIX TYPE
+  const menuRefs = useRef<Array<HTMLLIElement | null>>([]);
 
   const menus = [
     { name: "Dashboard", href: "/dashboard", icon: "ri-home-9-line" },
@@ -33,9 +34,7 @@ function MenuBars() {
         { name: "Delivered", href: "/quotes/delivered" },
       ],
     },
-
     { name: "Invoices", href: "/invoices", icon: "ri-price-tag-3-line" },
-
     {
       name: "Profile",
       icon: "ri-account-circle-line",
@@ -103,16 +102,18 @@ function MenuBars() {
             menu.children &&
             menu.children.some((c) => pathname.startsWith(c.href));
 
+          // 🔥 MENU WITH CHILDREN
           if (menu.children) {
             return (
               <li
                 key={menu.name}
-                ref={(el) => (menuRefs.current[index] = el)}
+                ref={(el) => {
+                  menuRefs.current[index] = el; // ✅ FIX DI SINI
+                }}
                 className="relative"
                 onMouseEnter={() => handleEnter(menu.name)}
                 onMouseLeave={handleLeave}
               >
-                {/* BUTTON */}
                 <div
                   className={`flex gap-2 px-4 py-3 w-[180px] justify-center items-center font-semibold cursor-pointer transition-all
                   ${
@@ -158,8 +159,14 @@ function MenuBars() {
             );
           }
 
+          // 🔥 MENU WITHOUT CHILDREN
           return (
-            <li key={menu.name} ref={(el) => (menuRefs.current[index] = el)}>
+            <li
+              key={menu.name}
+              ref={(el) => {
+                menuRefs.current[index] = el; // ✅ FIX DI SINI JUGA
+              }}
+            >
               <Link
                 href={menu.href!}
                 className={`flex gap-2 px-4 py-3 w-[160px] justify-center items-center font-semibold transition-all
