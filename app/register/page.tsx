@@ -82,9 +82,15 @@ export default function Page() {
         />
 
         <div className="relative z-10 flex flex-col justify-end h-full p-6 md:p-12 text-white">
-          <Logo size="sm" textColor="text-white" color="text-white" />
+          <Logo
+            size="sm"
+            textColor="text-white"
+            color="text-white"
+            width={140}
+            height={140}
+          />
 
-          <h1 className="text-2xl md:text-6xl font-bold mb-4">
+          <h1 className="text-2xl md:text-6xl font-bold mb-4 tracking-wide leading-tight">
             Why Freeze <br /> Logistics?
           </h1>
 

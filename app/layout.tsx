@@ -9,10 +9,15 @@ const fontPoppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Freeze Logistics",
-  description: "Company profile Freeze Logistics",
+  title: "App Freeze Logistics",
+  description: "App Freeze Logistics",
   icons: {
-    icon: "/assets/favicon.png",
+    icon: "/assets/logo_freeze_logistics_nav.ico",
+  },
+  openGraph: {
+    title: "Freeze Logistics",
+    description: "App Freeze Logistics",
+    images: ["/assets/logo_freeze_logistics_nav.ico"],
   },
 };
 
@@ -23,7 +28,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${fontPoppins.className} `}>
+      <body className={`${fontPoppins.className} `} suppressHydrationWarning>
         <>{children}</>
       </body>
     </html>

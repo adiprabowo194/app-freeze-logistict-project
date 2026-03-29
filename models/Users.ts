@@ -6,6 +6,7 @@ interface UserAttributes {
   customer_code: string;
   username?: string;
   email?: string;
+  full_name?: string;
   password?: string;
   status: number;
 }
@@ -22,6 +23,7 @@ const Users = sequelize.define<Model<UserAttributes>>(
     username: DataTypes.STRING,
     email: DataTypes.STRING,
     password: DataTypes.STRING,
+    full_name: DataTypes.STRING,
     status: DataTypes.INTEGER,
   },
   {

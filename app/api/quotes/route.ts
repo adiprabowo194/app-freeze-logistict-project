@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { Op } from "sequelize";
 import { connectDB } from "@/lib/sequelize";
+import { getSessionUser } from "@/lib/auth";
 
 // 🔥 WAJIB: load relation
 import "@/models";
@@ -9,6 +10,23 @@ import { Quotes as Booking, CoverageAreas } from "@/models";
 export async function GET(req: Request) {
   try {
     await connectDB();
+
+    // cek session
+    // ================= SESSION =================
+    const user = await getSessionUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const customerCode = user.customer_code;
+
+    if (!customerCode) {
+      return NextResponse.json(
+        { error: "customer_code not found in session" },
+        { status: 400 },
+      );
+    }
 
     const { searchParams } = new URL(req.url);
 
@@ -21,7 +39,9 @@ export async function GET(req: Request) {
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
 
-    const where: any = {};
+    const where: any = {
+      customer_code: customerCode, // 🔥 WAJIB FILTER
+    };
 
     // 🔍 SEARCH
     if (search) {
@@ -38,15 +58,18 @@ export async function GET(req: Request) {
         where.status = {
           [Op.in]: ["booking", "transit", "approve"],
         };
-      }else if (status === "confirm") {
-         where.status = {
-           [Op.in]: [ "approve"],
-         };
-      }else if (status === "transit") {
-         where.status = {
-           [Op.in]: [ "transit"],
-         };
-
+      } else if (status === "confirm") {
+        where.status = {
+          [Op.in]: ["approve"],
+        };
+      } else if (status === "transit") {
+        where.status = {
+          [Op.in]: ["transit"],
+        };
+      } else if (status === "booking") {
+        where.status = {
+          [Op.in]: ["booking"],
+        };
       } else {
         where.status = status;
       }
@@ -55,10 +78,7 @@ export async function GET(req: Request) {
     // 📅 DATE (FIX TIMEZONE SAFE)
     if (startDate && endDate) {
       where.createdAt = {
-        [Op.between]: [
-          new Date(startDate),
-          new Date(endDate + "T23:59:59"),
-        ],
+        [Op.between]: [new Date(startDate), new Date(endDate + "T23:59:59")],
       };
     }
 
@@ -101,9 +121,9 @@ export async function GET(req: Request) {
     return NextResponse.json(
       {
         error: error.message,
-        stack: error.stack, // 🔥 biar kelihatan jelas
+        stack: error.stack, // 🔥 biar kelihatan jelass
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -132,7 +132,6 @@ export default function QuotesPage() {
                         📍 {item.originArea?.suburb || "-"} →{" "}
                         {item.destinationArea?.suburb || "-"}
                       </p>
-                      <p>{item.cargo_type}</p>
                     </div>
                   </div>
 

@@ -9,6 +9,7 @@ import MenuBars from "@/components/MenuBars";
 import useQuotes from "@/hooks/useQuotes";
 import useSummary from "@/hooks/useSummary";
 import useDebounce from "@/hooks/useDebounce";
+import Link from "next/link";
 
 // 📦 TYPE
 interface Booking {
@@ -135,8 +136,6 @@ export default function QuotesByStatusPage() {
                       📍 {item.originArea?.suburb || "-"} →{" "}
                       {item.destinationArea?.suburb || "-"}
                     </p>
-
-                    <p className="text-sm">{item.cargo_type || "-"}</p>
                   </div>
 
                   {/* MIDDLE */}
@@ -170,13 +169,20 @@ export default function QuotesByStatusPage() {
                       {item.status || "-"}
                     </span>
 
-                    <button className="border px-3 py-1 rounded-lg text-sm hover:bg-gray-100">
-                      Track
-                    </button>
-
-                    <button className="border px-3 py-1 rounded-lg text-sm hover:bg-gray-100">
-                      Invoice
-                    </button>
+                    <div className="flex flex-col gap-2 text-center">
+                      <Link
+                        href={`/track-shipment/${item.connote_no}`}
+                        className="border px-4 py-1 rounded-lg text-sm hover:bg-gray-100 transition"
+                      >
+                        Track
+                      </Link>
+                      <Link
+                        href={`/invoice/${item.connote_no}`}
+                        className="border px-4 py-1 rounded-lg text-sm hover:bg-gray-100 transition"
+                      >
+                        Invoice
+                      </Link>
+                    </div>
                   </div>
                 </div>
               ))

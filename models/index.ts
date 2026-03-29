@@ -3,15 +3,29 @@ import CoverageAreasModel from "./CoverageAreas";
 import QuotesModel from "./Quotes";
 import TrackingHistoryModel from "./TrackingHistory";
 
+import UsersModel from "./Users";
 // 🔥 INIT MODEL DULU
 const Customers = CustomersModel;
 const CoverageAreas = CoverageAreasModel;
 const Quotes = QuotesModel;
 const TrackingHistory = TrackingHistoryModel;
+const Users = UsersModel;
 
 // ================= RELATIONS ================= //
 
 function initRelations() {
+  // Users -> Customers
+  Users.belongsTo(Customers, {
+    foreignKey: "customer_code",
+    targetKey: "customer_code",
+    as: "customer",
+  });
+
+  Customers.hasOne(Users, {
+    foreignKey: "customer_code",
+    sourceKey: "customer_code",
+    as: "user",
+  });
   // 🔥 Customers -> CoverageAreas
   Customers.belongsTo(CoverageAreas, {
     foreignKey: "pickup_suburb_code",
@@ -49,4 +63,4 @@ function initRelations() {
 // 🔥 JALANKAN SEKALI
 initRelations();
 
-export { Customers, CoverageAreas, Quotes, TrackingHistory };
+export { Customers, CoverageAreas, Quotes, TrackingHistory, Users };
