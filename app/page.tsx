@@ -104,9 +104,12 @@ const Home: React.FC = () => {
           </Link>
 
           {/* Forgot Password */}
-          <p className="text-center text-xs text-gray-400 cursor-pointer hover:underline">
+          <Link
+            href="/forgot-password"
+            className="block text-center text-xs text-gray-400 hover:underline"
+          >
             Forgot Password?
-          </p>
+          </Link>
         </form>
       </div>
     </div>

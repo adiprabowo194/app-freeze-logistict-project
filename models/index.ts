@@ -2,17 +2,18 @@ import CustomersModel from "./Customers";
 import CoverageAreasModel from "./CoverageAreas";
 import QuotesModel from "./Quotes";
 import TrackingHistoryModel from "./TrackingHistory";
-
 import UsersModel from "./Users";
-// 🔥 INIT MODEL DULU
+import ResetTokensModel from "./ResetTokens"; // ✅ FIX IMPORT
+
+// ================= INIT MODEL =================
 const Customers = CustomersModel;
 const CoverageAreas = CoverageAreasModel;
 const Quotes = QuotesModel;
 const TrackingHistory = TrackingHistoryModel;
 const Users = UsersModel;
+const ResetTokens = ResetTokensModel; // ✅ sekarang valid
 
-// ================= RELATIONS ================= //
-
+// ================= RELATIONS =================
 function initRelations() {
   // Users -> Customers
   Users.belongsTo(Customers, {
@@ -26,7 +27,8 @@ function initRelations() {
     sourceKey: "customer_code",
     as: "user",
   });
-  // 🔥 Customers -> CoverageAreas
+
+  // Customers -> CoverageAreas
   Customers.belongsTo(CoverageAreas, {
     foreignKey: "pickup_suburb_code",
     targetKey: "area_code",
@@ -39,7 +41,7 @@ function initRelations() {
     as: "officeArea",
   });
 
-  // 🔥 Quotes -> CoverageAreas
+  // Quotes -> CoverageAreas
   Quotes.belongsTo(CoverageAreas, {
     foreignKey: "suburb_origin",
     targetKey: "area_code",
@@ -52,15 +54,30 @@ function initRelations() {
     as: "destinationArea",
   });
 
-  // 🔥 TrackingHistory -> Quotes
+  // TrackingHistory -> Quotes
   TrackingHistory.belongsTo(Quotes, {
     foreignKey: "connote_no",
     targetKey: "connote_no",
     as: "quote",
   });
+
+  // 🔥 OPTIONAL: ResetTokens relation
+  ResetTokens.belongsTo(Users, {
+    foreignKey: "email",
+    targetKey: "email",
+    as: "user",
+  });
 }
 
-// 🔥 JALANKAN SEKALI
+// ================= INIT =================
 initRelations();
 
-export { Customers, CoverageAreas, Quotes, TrackingHistory, Users };
+// ================= EXPORT =================
+export {
+  Customers,
+  CoverageAreas,
+  Quotes,
+  TrackingHistory,
+  Users,
+  ResetTokens,
+};
