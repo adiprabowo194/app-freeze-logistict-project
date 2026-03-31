@@ -52,8 +52,8 @@ export async function POST(req: Request) {
     resend.emails
       .send({
         from: "Freeze Logistics <no-reply@freezelogistics.com.au>",
-        // to: ["admin@freezelogistics.com.au"],
-        to: ["adiprabowo194@gmail.com"],
+        to: ["admin@freezelogistics.com.au"],
+        // to: ["adiprabowo194@gmail.com"],
         subject: "New Contact Message",
         html: emailTemplate(validated),
       })
@@ -82,7 +82,6 @@ export async function POST(req: Request) {
       success: true,
       data: responseData,
     });
-
   } catch (error: any) {
     console.error("API ERROR:", error);
 
@@ -91,7 +90,7 @@ export async function POST(req: Request) {
         success: false,
         message: error?.errors || error?.message || "Something went wrong",
       },
-      { status: 400 }
+      { status: 400 },
     );
   }
 }
