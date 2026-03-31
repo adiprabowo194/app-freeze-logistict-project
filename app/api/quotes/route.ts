@@ -20,6 +20,7 @@ export async function GET(req: Request) {
     }
 
     const customerCode = user.customer_code;
+    const username = user.username;
 
     if (!customerCode) {
       return NextResponse.json(

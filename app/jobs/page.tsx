@@ -64,8 +64,8 @@ function Page() {
       suburb_destination: deliverySuburb.area_code,
       pickup_address: pickupAddress,
       delivery_address: deliveryAddress,
-      customer_code: "CN00001",
-      user_inp: "system",
+      // customer_code: "CN00001",
+      // user_inp: "system",
     };
 
     try {
@@ -126,7 +126,7 @@ function Page() {
               <h2 className="font-semibold mb-2">Pickup & Delivery</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <SelectSearch
-                  label="Pickup Suburb, State"
+                  label="Pickup Suburb"
                   value={pickupSuburb}
                   onChange={setPickupSuburb}
                 />
@@ -139,7 +139,7 @@ function Page() {
                   required
                 />
                 <SelectSearch
-                  label="Delivery Suburb, State"
+                  label="Delivery Suburb"
                   value={deliverySuburb}
                   onChange={setDeliverySuburb}
                 />
