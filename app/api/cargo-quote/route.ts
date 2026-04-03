@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
 
     // Validasi sederhana
     const requiredFields = [
-      "cargo_type",
+      "temperature",
       "unit",
       "qty",
       "weight",

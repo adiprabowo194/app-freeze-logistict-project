@@ -22,13 +22,11 @@ interface Booking {
   createdAt: string;
 
   originArea?: {
-    suburb: string;
-    state: string;
+    suburb?: string; // bisa undefined
   };
 
   destinationArea?: {
-    suburb: string;
-    state: string;
+    suburb?: string; // bisa undefined
   };
 }
 
@@ -42,6 +40,7 @@ export default function QuotesPage() {
 
   // 🔥 FETCH TABLE
 
+  // 🔥 TABLE DATA
   const { data, totalPages, loading } = useQuotes({
     page,
     limit,
@@ -134,7 +133,7 @@ export default function QuotesPage() {
 
                   {/* MIDDLE */}
                   <div className="space-y-2 text-sm">
-                    <p>Temperature: {item.cargo_type}</p>
+                    <p>Temperature: {item.temperature}</p>
                     <p>
                       Unit:{" "}
                       <span className="text-blue-400 bg-blue-100 px-2 py-1 rounded-xl ">
@@ -153,9 +152,9 @@ export default function QuotesPage() {
                   <div className="flex flex-col items-end gap-3">
                     <span
                       className={`px-3 py-1 rounded-full text-xs ${
-                        item.status === "delivered"
+                        item.status === "Delivered"
                           ? "bg-green-100 text-green-600"
-                          : item.status === "transit"
+                          : item.status === "Booking"
                             ? "bg-blue-100 text-blue-600"
                             : "bg-yellow-100 text-yellow-600"
                       }`}

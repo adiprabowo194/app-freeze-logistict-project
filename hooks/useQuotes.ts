@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 interface Quote {
   id: number;
   connote_no: string;
-  cargo_type: string;
+  temperature: string;
   originArea?: {
     suburb?: string;
   };
