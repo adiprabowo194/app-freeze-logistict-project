@@ -12,6 +12,7 @@ const Quotes = sequelize.define(
     pickup_date: DataTypes.DATE,
     receiver_name: DataTypes.STRING(100),
     receiver_phone: DataTypes.STRING(50),
+    temperature: DataTypes.STRING(50),
     // cargo_category: DataTypes.STRING(50),
     suburb_origin: DataTypes.STRING(100),
     suburb_destination: DataTypes.STRING(100),

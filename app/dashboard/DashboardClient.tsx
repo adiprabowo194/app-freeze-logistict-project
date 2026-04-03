@@ -145,11 +145,9 @@ export default function DashboardClient() {
                 className="border px-4 py-2 rounded-xl text-sm"
               >
                 <option value="">All Status</option>
-                <option value="onprocess">On Process</option>
+
                 <option value="Delivered">Delivered</option>
                 <option value="booking">Booking</option>
-                <option value="transit">Transit</option>
-                <option value="confirm">Confrim</option>
               </select>
 
               {/* SEARCH */}
