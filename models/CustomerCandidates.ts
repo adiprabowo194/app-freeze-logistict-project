@@ -4,6 +4,7 @@ import { sequelize } from "@/lib/sequelize";
 interface CustomerCandidatesAttributes {
   id?: number;
   email: string;
+  abn?: string;
   website: string;
   company_name: string;
   contact_name: string;
@@ -15,7 +16,9 @@ interface CustomerCandidatesAttributes {
   updatedAt?: Date;
 }
 
-const CustomerCandidates = sequelize.define<Model<CustomerCandidatesAttributes>>(
+const CustomerCandidates = sequelize.define<
+  Model<CustomerCandidatesAttributes>
+>(
   "customer_candidates",
   {
     id: {
@@ -24,6 +27,7 @@ const CustomerCandidates = sequelize.define<Model<CustomerCandidatesAttributes>>
       primaryKey: true,
     },
     email: DataTypes.STRING,
+    abn: DataTypes.STRING,
     company_name: DataTypes.STRING,
     website: DataTypes.STRING,
     contact_name: DataTypes.STRING,
@@ -35,7 +39,7 @@ const CustomerCandidates = sequelize.define<Model<CustomerCandidatesAttributes>>
   {
     tableName: "customer_candidates",
     timestamps: true,
-  }
+  },
 );
 
 export default CustomerCandidates;

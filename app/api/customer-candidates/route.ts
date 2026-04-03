@@ -45,19 +45,26 @@ export async function POST(req: Request) {
 
     // ✅ ambil raw data biar TS aman
     const raw = data.get();
+    // ========================
+    // SEND EMAIL (non-blocking)
+    // ========================
+    const sendEmail = async () => {
+      try {
+        await resend.emails.send({
+          from: "Freeze Logistics <no-reply@freezelogistics.com.au>",
+          to: process.env.EMAIL_REGISTER_SENDING
+            ? [process.env.EMAIL_REGISTER_SENDING]
+            : ["admin@freezelogistics.com.au"],
+          subject: "New Contact Message",
+          html: emailTemplate(validated),
+        });
+      } catch (error) {
+        console.error("Failed to send email:", error);
+      }
+    };
 
-    // ========================
-    // SEND EMAIL (tidak blocking)
-    // ========================
-    resend.emails
-      .send({
-        from: "Freeze Logistics <no-reply@freezelogistics.com.au>",
-        to: ["admin@freezelogistics.com.au"],
-        // to: ["adiprabowo194@gmail.com"],
-        subject: "New Contact Message",
-        html: emailTemplate(validated),
-      })
-      .catch(console.error);
+    // jalankan tanpa blocking
+    sendEmail();
 
     // ========================
     // FORMAT RESPONSE
