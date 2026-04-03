@@ -63,9 +63,9 @@ const Home: React.FC = () => {
         </div>
 
         {/* Title */}
-        <h6 className="text-sm text-gray-600 text-center">
+        {/* <h6 className="text-sm text-gray-600 text-center">
           Portal Booking Cold Freight untuk UKM Australia
-        </h6>
+        </h6> */}
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -97,7 +97,7 @@ const Home: React.FC = () => {
           <Link href="/register" className="block">
             <Button
               type="button"
-              className="rounded-full bg-gray-800 hover:bg-gray-900"
+              className="rounded-full bg-gray-800 hover:bg-gray-900 w-full"
             >
               Register Account
             </Button>

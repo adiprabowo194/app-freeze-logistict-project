@@ -10,7 +10,7 @@ import useQuotes from "@/hooks/useQuotes";
 import useSummary from "@/hooks/useSummary";
 import useDebounce from "@/hooks/useDebounce";
 import Link from "next/link";
-
+import Pagination from "@/components/Pagination";
 // 📦 TYPE
 interface Booking {
   id: number;
@@ -38,7 +38,7 @@ export default function QuotesByStatusPage() {
   // 🔹 STATE
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-
+  const [limit, setLimit] = useState(10);
   const debouncedSearch = useDebounce(search);
 
   // 🔥 NORMALIZE STATUS (penting)
@@ -50,9 +50,9 @@ export default function QuotesByStatusPage() {
         : statusParam;
 
   // 🔥 TABLE DATA
-  const { data, loading } = useQuotes({
+  const { data, totalPages, loading } = useQuotes({
     page,
-    limit: 5,
+    limit,
     search: debouncedSearch,
     status,
   });
@@ -79,7 +79,6 @@ export default function QuotesByStatusPage() {
               Filtered by status: {statusParam}
             </p>
           </div>
-
           {/* 🔍 SEARCH */}
           <div>
             <input
@@ -92,7 +91,6 @@ export default function QuotesByStatusPage() {
               className="w-full px-4 py-3 rounded-xl border bg-gray-100 text-sm outline-none focus:ring-2 focus:ring-blue-400"
             />
           </div>
-
           {/* 📊 SUMMARY */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-white rounded-2xl border p-5 text-center">
@@ -110,7 +108,6 @@ export default function QuotesByStatusPage() {
               <p className="text-xl font-bold text-green-500">{delivered}</p>
             </div>
           </div>
-
           {/* 📦 LIST */}
           <div className="space-y-4">
             {loading ? (
@@ -187,6 +184,28 @@ export default function QuotesByStatusPage() {
                 </div>
               ))
             )}
+          </div>
+          <div className="flex items-center justify-between relative">
+            {/* select option mengatur limit  */}
+            {/* 🔹 LIMIT SELECT */}
+            <div className="flex items-center gap-2 top-2 relative">
+              <span className="text-sm text-gray-500">Show</span>
+              <select
+                value={limit}
+                onChange={(e) => {
+                  setLimit(Number(e.target.value));
+                  setPage(1); // 🔥 reset page
+                }}
+                className="border rounded-lg px-2 py-1 text-sm"
+              >
+                <option value={limit}>{limit}</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+                <option value={500}>500</option>
+              </select>
+              <span className="text-sm text-gray-500">entries</span>
+            </div>
+            <Pagination page={page} totalPages={totalPages} setPage={setPage} />
           </div>
         </div>
       </div>

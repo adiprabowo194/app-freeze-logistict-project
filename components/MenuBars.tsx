@@ -22,16 +22,21 @@ function MenuBars() {
 
   const menus = [
     { name: "Dashboard", href: "/dashboard", icon: "ri-home-9-line" },
-    { name: "My Jobs", href: "/jobs", icon: "ri-file-list-2-line" },
     {
-      name: "All Quote",
+      name: "Quotes",
+      icon: "ri-file-list-2-line",
+      children: [
+        { name: "Quick Quote", href: "/quote/quick-quote" },
+        { name: "Saved Quotes", href: "/quotes/entry" },
+      ],
+    },
+    {
+      name: "Jobs",
       icon: "ri-box-3-line",
       children: [
-        { name: "All Quotes", href: "/quotes" },
-        { name: "Booking", href: "/quotes/booking" },
-        { name: "Confirmed", href: "/quotes/confirm" },
-        { name: "Onprocess", href: "/quotes/onprocess" },
-        { name: "Delivered", href: "/quotes/delivered" },
+        { name: "All Jobs", href: "/jobs" },
+        { name: "Booking Jobs", href: "/jobs/booking" },
+        { name: "Delivered Jobs", href: "/jobs/delivered" },
       ],
     },
     { name: "Invoices", href: "/invoices", icon: "ri-price-tag-3-line" },

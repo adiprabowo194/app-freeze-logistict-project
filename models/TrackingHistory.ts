@@ -14,8 +14,8 @@ const TrackingHistory = sequelize.define(
   },
   {
     tableName: "tracking_histories",
-    timestamps: false,
-  }
+    timestamps: true,
+  },
 );
 
 export default TrackingHistory;

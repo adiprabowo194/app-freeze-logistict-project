@@ -106,6 +106,8 @@ export async function GET(req: Request) {
           required: false,
         },
       ],
+      raw: false, // 🔥 penting
+      nest: true, // 🔥 penting
     });
 
     console.log("ROWS:", result.rows.length);

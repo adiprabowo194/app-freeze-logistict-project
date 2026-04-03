@@ -29,6 +29,7 @@ export async function POST(req: Request) {
     // ========================
     const formData = {
       company_name: validated.companyName,
+      abn: validated.abn,
       email: validated.email,
       website: validated.website,
       contact_name: validated.contactName,

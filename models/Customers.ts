@@ -7,6 +7,7 @@ const Customers = sequelize.define(
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
 
     customer_code: DataTypes.STRING(100),
+    abn: DataTypes.STRING(50),
     company_name: DataTypes.STRING(100),
     email: DataTypes.STRING(100),
     website: DataTypes.STRING(50),
@@ -28,7 +29,7 @@ const Customers = sequelize.define(
     tableName: "customers",
     timestamps: true,
     freezeTableName: true,
-  }
+  },
 );
 
 export default Customers;

@@ -1,192 +1,254 @@
 "use client";
 
 import { useState } from "react";
-
+import toast, { Toaster } from "react-hot-toast";
 import TopNavbar from "@/components/TopNavbar";
 import MenuBars from "@/components/MenuBars";
+import InputField from "@/components/InputField";
+import SelectSearch from "@/components/SelectSearch";
+import SelectField from "@/components/SelectField";
+import Button from "@/components/Button";
+import TextareaField from "@/components/TextareaField";
 
-import useQuotes from "@/hooks/useQuotes";
-import useSummary from "@/hooks/useSummary";
-import useDebounce from "@/hooks/useDebounce";
-import Link from "next/link";
+type Option = {
+  label: string;
+  value: string;
+  area_code: string;
+};
 
-// 📦 TYPE (pakai JOIN)
-interface Booking {
-  id: number;
-  unit?: string; // bisa undefined
-  connote_no: string;
-  cargo_type: string;
-  weight: number;
-  qty: number;
-  status: string;
-  createdAt: string;
+function Page() {
+  const [pickupSuburb, setPickupSuburb] = useState<Option | null>(null);
+  const [deliverySuburb, setDeliverySuburb] = useState<Option | null>(null);
+  const [pickupAddress, setPickupAddress] = useState("");
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [cargoTemp, setCargoTemp] = useState("");
+  const [cargoUnit, setCargoUnit] = useState("");
+  const [qty, setQty] = useState("");
+  const [weight, setWeight] = useState("");
+  const [pickupDate, setPickupDate] = useState("");
+  const [cargoCategory, setCargoCategory] = useState("");
+  const [receiverName, setReceiverName] = useState("");
+  const [receiverPhone, setReceiverPhone] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  originArea?: {
-    suburb: string;
-    state: string;
+  const handleSubmitCargo = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!pickupSuburb?.area_code)
+      return toast.error("Please select Pickup Suburb");
+    if (!deliverySuburb?.area_code)
+      return toast.error("Please select Delivery Suburb");
+    if (!cargoTemp) return toast.error("Please select Cargo Temperature");
+    if (!cargoUnit) return toast.error("Please select Unit");
+    if (!qty || Number(qty) <= 0)
+      return toast.error("Qty must be greater than 0");
+    if (!weight || Number(weight) <= 0)
+      return toast.error("Weight must be greater than 0");
+    if (!pickupDate) return toast.error("Please select Pickup Date");
+    if (!cargoCategory) return toast.error("Please select Cargo Category");
+    if (!receiverName) return toast.error("Please enter Receiver Name");
+    if (!receiverPhone) return toast.error("Please enter Receiver Phone");
+
+    setLoading(true);
+
+    const payload = {
+      cargo_type: cargoTemp,
+      unit: cargoUnit,
+      qty: Number(qty),
+      weight: Number(weight),
+      pickup_date: pickupDate,
+      cargo_category: cargoCategory,
+      receiver_name: receiverName,
+      receiver_phone: receiverPhone,
+      suburb_origin: pickupSuburb.area_code,
+      suburb_destination: deliverySuburb.area_code,
+      pickup_address: pickupAddress,
+      delivery_address: deliveryAddress,
+      // customer_code: "CN00001",
+      // user_inp: "system",
+    };
+
+    try {
+      const res = await fetch("/api/cargo-quote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+
+      if (!res.ok) toast.error(data.message || "Failed to get quote");
+      else {
+        toast.success("Quote successfully generated!");
+        handleResetCargo();
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Something went wrong");
+    }
+
+    setLoading(false);
   };
 
-  destinationArea?: {
-    suburb: string;
-    state: string;
+  const handleResetCargo = () => {
+    setPickupSuburb(null);
+    setDeliverySuburb(null);
+    setPickupAddress("");
+    setDeliveryAddress("");
+    setCargoTemp("");
+    setCargoUnit("");
+    setQty("");
+    setWeight("");
+    setPickupDate("");
+    setCargoCategory("");
+    setReceiverName("");
+    setReceiverPhone("");
   };
-}
-
-export default function QuotesPage() {
-  // 🔹 STATE
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("");
-  const [page, setPage] = useState(1);
-
-  const debouncedSearch = useDebounce(search);
-
-  // 🔥 FETCH TABLE
-  const { data, loading } = useQuotes({
-    page,
-    limit: 5,
-    search: debouncedSearch,
-    status,
-  });
-
-  // 🔥 FETCH SUMMARY
-  const { active, delivered, onprocess } = useSummary({
-    search: debouncedSearch,
-    status,
-  });
 
   return (
     <div className="bg-gray-50 min-h-screen">
       <TopNavbar />
       <MenuBars />
+      <Toaster position="top-right" />
+      <div className="px-6">
+        <div className="p-6 px-16">
+          <h1 className="text-2xl font-semibold mb-1">Create New Quote</h1>
+          <p className="text-sm text-gray-500 mb-6">
+            Get instant Carrier by filling this page
+          </p>
 
-      {/* 🔥 CONTENT */}
-      <div className="p-6 px-16">
-        <div className="mb-6 px-8 space-y-6">
-          {/* 🔹 TITLE */}
-          <div>
-            <h1 className="text-2xl font-bold">List Jobs</h1>
-            <p className="text-gray-500 text-sm">
-              View and manage all your shipments
-            </p>
-          </div>
-
-          {/* 🔍 SEARCH */}
-          <div>
-            <input
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-              placeholder="Search connote / origin / destination..."
-              className="w-full px-4 py-3 rounded-xl border bg-gray-100 text-sm outline-none focus:ring-2 focus:ring-blue-400"
-            />
-          </div>
-
-          {/* 📊 SUMMARY */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-white rounded-2xl border p-5 text-center">
-              <p className="text-gray-500 text-sm">Total Bookings</p>
-              <p className="text-xl font-bold">{active}</p>
+          <form
+            autoComplete="off"
+            onSubmit={handleSubmitCargo}
+            className="space-y-6"
+          >
+            {/* Pickup & Delivery */}
+            <div className="bg-gray-100 rounded-2xl p-6">
+              <h2 className="font-semibold mb-2">Pickup & Delivery</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <SelectSearch
+                  label="Pickup Suburb"
+                  value={pickupSuburb}
+                  onChange={setPickupSuburb}
+                />
+                <TextareaField
+                  name="pickup_address" // ✅ WAJIB
+                  label="Pickup Address"
+                  rows={1}
+                  value={pickupAddress}
+                  onChange={(e) => setPickupAddress(e.target.value)}
+                  required
+                />
+                <SelectSearch
+                  label="Delivery Suburb"
+                  value={deliverySuburb}
+                  onChange={setDeliverySuburb}
+                />
+                <TextareaField
+                  name="delivery_address" // ✅ WAJIB
+                  label="Delivery Address"
+                  rows={1}
+                  value={deliveryAddress}
+                  onChange={(e) => setDeliveryAddress(e.target.value)}
+                  required
+                />
+              </div>
             </div>
 
-            <div className="bg-white rounded-2xl border p-5 text-center">
-              <p className="text-gray-500 text-sm">On Process</p>
-              <p className="text-xl font-bold text-yellow-500">{onprocess}</p>
+            {/* Cargo Details */}
+            <div className="bg-gray-100 rounded-2xl p-6">
+              <h2 className="font-semibold mb-2">Cargo Details</h2>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <SelectField
+                  label="Cargo Temperature"
+                  options={[
+                    { label: "Frozen (-18 C to -25 C)", value: "frozen" },
+                    { label: "Chilled (0 C to 5 C)", value: "chilled" },
+                  ]}
+                  value={cargoTemp}
+                  onChange={setCargoTemp}
+                  name="cargoTemp"
+                  required
+                />
+                <SelectField
+                  label="Unit"
+                  options={[
+                    { label: "Pallet", value: "pallet" },
+                    { label: "Box", value: "box" },
+                  ]}
+                  value={cargoUnit}
+                  onChange={setCargoUnit}
+                  name="cargoUnit"
+                  required
+                />
+                <InputField
+                  label="Qty"
+                  type="number"
+                  value={qty}
+                  onChange={(e) => setQty(e.target.value)}
+                  name="qty"
+                  required
+                />
+                <InputField
+                  label="Weight"
+                  type="number"
+                  value={weight}
+                  onChange={(e) => setWeight(e.target.value)}
+                  name="weight"
+                  required
+                />
+                <InputField
+                  label="Pickup Date"
+                  type="date"
+                  value={pickupDate}
+                  onChange={(e) => setPickupDate(e.target.value)}
+                  name="pickupDate"
+                  required
+                />
+                <SelectField
+                  label="Cargo Category"
+                  options={[
+                    { label: "Cargo", value: "cargo" },
+                    { label: "Document", value: "document" },
+                  ]}
+                  value={cargoCategory}
+                  onChange={setCargoCategory}
+                  name="cargoCategory"
+                  required
+                />
+                <InputField
+                  label="Receiver Name"
+                  value={receiverName}
+                  onChange={(e) => setReceiverName(e.target.value)}
+                  name="receiverName"
+                  required
+                />
+                <InputField
+                  label="Receiver Phone"
+                  value={receiverPhone}
+                  onChange={(e) => setReceiverPhone(e.target.value)}
+                  name="receiverPhone"
+                  required
+                />
+              </div>
             </div>
 
-            <div className="bg-white rounded-2xl border p-5 text-center">
-              <p className="text-gray-500 text-sm">Delivered</p>
-              <p className="text-xl font-bold text-green-500">{delivered}</p>
+            <div className="flex gap-4">
+              <Button type="submit" variant="primary" disabled={loading}>
+                {loading ? "Getting Quote..." : "Submit"}
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleResetCargo}
+              >
+                Cancel
+              </Button>
             </div>
-
-            <div className="bg-white rounded-2xl border p-5 text-center">
-              <p className="text-gray-500 text-sm">Total Data</p>
-              <p className="text-xl font-bold">{data.length}</p>
-            </div>
-          </div>
-
-          {/* 📦 LIST */}
-          <div className="space-y-4">
-            {loading ? (
-              <p className="text-gray-400 text-sm">Loading...</p>
-            ) : data.length === 0 ? (
-              <p className="text-gray-400 text-sm">No data found</p>
-            ) : (
-              data.map((item: Booking) => (
-                <div
-                  key={item.id}
-                  className="bg-white rounded-2xl border p-5 flex justify-between items-start"
-                >
-                  {/* LEFT */}
-                  <div className="space-y-3">
-                    <div>
-                      <p className="font-semibold">{item.connote_no}</p>
-                      <p className="text-sm text-gray-500">
-                        {new Date(item.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-
-                    <div className="text-sm">
-                      <p>
-                        📍 {item.originArea?.suburb || "-"} →{" "}
-                        {item.destinationArea?.suburb || "-"}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* MIDDLE */}
-                  <div className="space-y-2 text-sm">
-                    <p>Temperature: {item.cargo_type}</p>
-                    <p>
-                      Unit:{" "}
-                      <span className="text-blue-400 bg-blue-100 px-2 py-1 rounded-xl ">
-                        {" "}
-                        {item.unit || "-"}
-                      </span>
-                    </p>
-                  </div>
-                  {/* MIDDLE */}
-                  <div className="space-y-2 text-sm">
-                    <p>📦 {item.weight} kg</p>
-                    <p>Qty: {item.qty}</p>
-                  </div>
-
-                  {/* RIGHT */}
-                  <div className="flex flex-col items-end gap-3">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs ${
-                        item.status === "delivered"
-                          ? "bg-green-100 text-green-600"
-                          : item.status === "transit"
-                            ? "bg-blue-100 text-blue-600"
-                            : "bg-yellow-100 text-yellow-600"
-                      }`}
-                    >
-                      {item.status}
-                    </span>
-
-                    <div className="flex flex-col gap-2 text-center">
-                      <Link
-                        href={`/track-shipment/${item.connote_no}`}
-                        className="border px-4 py-1 rounded-lg text-sm hover:bg-gray-100 transition"
-                      >
-                        Track
-                      </Link>
-                      <Link
-                        href={`/invoice/${item.connote_no}`}
-                        className="border px-4 py-1 rounded-lg text-sm hover:bg-gray-100 transition"
-                      >
-                        Invoice
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+          </form>
         </div>
       </div>
     </div>
   );
 }
+
+export default Page;

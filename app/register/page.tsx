@@ -22,6 +22,7 @@ export default function Page() {
 
     const payload = {
       companyName: (form.companyName as HTMLInputElement).value,
+      abn: (form.abn as HTMLInputElement).value,
       email: (form.email as HTMLInputElement).value,
       website: (form.website as HTMLInputElement).value,
       contactName: (form.contactName as HTMLInputElement).value,
@@ -134,6 +135,17 @@ export default function Page() {
                 name="companyName"
                 required={true}
               />
+              <InputField label="Abn" name="abn" type="text" required={true} />
+              <InputField
+                label="Contact Name"
+                name="contactName"
+                required={true}
+              />
+              <InputField
+                label="Contact Number."
+                name="contactNo"
+                required={true}
+              />
               <InputField
                 label="Email"
                 name="email"
@@ -141,14 +153,10 @@ export default function Page() {
                 required={true}
               />
               <InputField label="Website" name="website" required={false} />
-              <InputField
-                label="Contact Name"
-                name="contactName"
-                required={true}
-              />
-              <InputField
-                label="Contact No."
-                name="contactNo"
+              <TextareaField
+                rows={2}
+                label="Street Address"
+                name="companyAddress"
                 required={true}
               />
 
@@ -158,12 +166,6 @@ export default function Page() {
                 onChange={(val) => setSuburb(val)}
               />
             </div>
-
-            <TextareaField
-              label="Company Address"
-              name="companyAddress"
-              required={true}
-            />
 
             <Button
               type="submit"

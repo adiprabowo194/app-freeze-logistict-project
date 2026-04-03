@@ -5,19 +5,14 @@ import { Toaster } from "react-hot-toast";
 import toast from "react-hot-toast";
 
 import useQuotes from "@/hooks/useQuotes";
-import useSummary from "@/hooks/useSummary";
+import Link from "next/link";
 import useDebounce from "@/hooks/useDebounce";
-
-import DataTable from "@/components/DataTable";
+import Button from "@/components/Button";
+import TextareaField from "@/components/TextareaField";
 import StatusBadge from "@/components/StatusBadge";
-import TableToolbar from "@/components/TableToolbar";
 import Pagination from "@/components/Pagination";
-import SummaryCard from "@/components/SummaryCard";
 import TopNavbar from "@/components/TopNavbar";
 import MenuBars from "@/components/MenuBars";
-import DateFilter from "@/components/DateRange";
-
-import { getLast7DaysRange } from "@/utils/daterange";
 
 // 📦 TYPES
 interface Booking {
@@ -35,83 +30,35 @@ interface Booking {
   createdAt: string;
 
   originArea?: {
-    suburb: string;
-  };
+    suburb?: string;
+    state?: string;
+  } | null;
+
   destinationArea?: {
-    suburb: string;
-  };
+    suburb?: string;
+    state?: string;
+  } | null;
 }
 
-// 🔥 TYPE COLUMN (BIAR GENERIC AMAN)
-type Column<T> = {
-  header: string;
-  accessor?: keyof T;
-  render?: (row: T) => React.ReactNode;
-};
-
 export default function DashboardClient() {
-  const defaultRange = getLast7DaysRange();
-
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
-
-  const [startDate, setStartDate] = useState(defaultRange.startDate);
-  const [endDate, setEndDate] = useState(defaultRange.endDate);
-
+  const [limit, setLimit] = useState(10);
   const debouncedSearch = useDebounce(search);
 
   const { data, totalPages, loading } = useQuotes({
     page,
-    limit: 5,
+    limit,
     search: debouncedSearch,
     status,
-    startDate,
-    endDate,
   });
-
-  const {
-    active,
-    delivered,
-    onprocess,
-    loading: summaryLoading,
-  } = useSummary({
-    startDate,
-    endDate,
-    status,
-    search: debouncedSearch,
-  });
-
-  // ✅ FIX TYPE COLUMNS
-  const columns: Column<Booking>[] = [
-    { header: "Connote No.", accessor: "connote_no" },
-    {
-      header: "Origin - Dest",
-      render: (row) =>
-        `${row.originArea?.suburb || "-"} - ${
-          row.destinationArea?.suburb || "-"
-        }`,
-    },
-    { header: "Cargo Type", accessor: "cargo_type" },
-    { header: "Unit", accessor: "unit" },
-    { header: "Weight", accessor: "weight" },
-    { header: "Qty", accessor: "qty" },
-    {
-      header: "Created At",
-      render: (row) =>
-        row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "-",
-    },
-    {
-      header: "Status",
-      render: (row) => <StatusBadge status={row.status} />,
-    },
-  ];
 
   const [showAlert, setShowAlert] = useState(false);
-
+  const [loadingMessage, setLoadingMessage] = useState(false);
   useEffect(() => {
     const isLogin = sessionStorage.getItem("just_login");
-
+    setPage(1);
     if (isLogin) {
       setShowAlert(true);
       toast.success("Welcome to dashboard");
@@ -123,7 +70,44 @@ export default function DashboardClient() {
 
       return () => clearTimeout(timer);
     }
-  }, []);
+  }, [limit]);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoadingMessage(true);
+
+    const form = e.currentTarget;
+
+    const payload = {
+      enquiry: (form.enquiry as HTMLInputElement).value,
+    };
+
+    try {
+      const res = await fetch("/api/send-enquiry", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.message || "Failed send data");
+      } else {
+        toast.success("Your Enquiry successfully send");
+
+        // ✅ reset form
+        form.reset();
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Something went wrong");
+    }
+
+    setLoadingMessage(false);
+  };
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -144,82 +128,147 @@ export default function DashboardClient() {
           </div>
         )}
 
-        {/* 📊 SUMMARY */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 px-8">
-          {summaryLoading ? (
-            <>
-              <div className="h-24 bg-gray-100 animate-pulse rounded-2xl" />
-              <div className="h-24 bg-gray-100 animate-pulse rounded-2xl" />
-              <div className="h-24 bg-gray-100 animate-pulse rounded-2xl" />
-            </>
-          ) : (
-            <>
-              <SummaryCard
-                title="Active Orders"
-                value={active}
-                icon="ri-stack-line"
-                color="blue"
-              />
+        {/* 📊 RECENT JOBs */}
+        <div className="flex gap-4 mb-6 px-8">
+          <div className="bg-white rounded-2xl border shadow-sm p-6 w-2/4">
+            {/* item list recent jobs */}
+            <h2 className="text-2xl mb-4 font-semibold">Recent Jobs</h2>
+            {/* toolbar */}
+            <div className="flex gap-3">
+              {/* STATUS */}
+              <select
+                value={status}
+                onChange={(e) => {
+                  setStatus(e.target.value);
+                  setPage(1); // 🔥 RESET PAGE
+                }}
+                className="border px-4 py-2 rounded-xl text-sm"
+              >
+                <option value="">All Status</option>
+                <option value="onprocess">On Process</option>
+                <option value="Delivered">Delivered</option>
+                <option value="booking">Booking</option>
+                <option value="transit">Transit</option>
+                <option value="confirm">Confrim</option>
+              </select>
 
-              <SummaryCard
-                title="Delivered Orders"
-                value={delivered}
-                icon="ri-checkbox-circle-line"
-                color="green"
-              />
-
-              <SummaryCard
-                title="On Process"
-                value={onprocess}
-                icon="ri-time-line"
-                color="yellow"
-              />
-            </>
-          )}
-        </div>
-
-        {/* 📦 TABLE */}
-        <div className="px-8">
-          <div className="bg-white rounded-2xl border shadow-sm p-6">
-            {/* HEADER */}
-            <div className="mb-4 flex justify-between items-start">
-              <div>
-                <h2 className="text-lg font-semibold">Recent Bookings</h2>
-                <p className="text-sm text-gray-500">
-                  Your latest shipments and their status
-                </p>
-              </div>
-
-              <DateFilter
-                startDate={startDate}
-                endDate={endDate}
-                setStartDate={setStartDate}
-                setEndDate={setEndDate}
-                setPage={setPage}
+              {/* SEARCH */}
+              <input
+                placeholder="Search connote / origin / destination..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1); // 🔥 RESET PAGE
+                }}
+                className="border px-3 py-2 rounded-xl text-sm w-full"
               />
             </div>
+            {/* datatable */} {/* ✅ TABLE FIXED */}
+            {(data || []).map((item) => (
+              <div
+                key={item.id}
+                className="flex items-center justify-between rounded-xl border bg-white p-4 shadow-sm hover:shadow-md transition my-4"
+              >
+                {/* LEFT */}
+                <div>
+                  <p className="font-semibold text-sm text-blue-400">
+                    {item.connote_no}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {item.originArea?.suburb} - {item.destinationArea?.suburb}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    {item.createdAt
+                      ? new Date(item.createdAt).toLocaleDateString()
+                      : "-"}
+                  </p>
+                </div>
 
-            {/* FILTER */}
-            <TableToolbar
-              search={search}
-              setSearch={setSearch}
-              status={status}
-              setStatus={setStatus}
-              setPage={setPage}
-            />
+                {/* MIDDLE */}
+                <div className="text-sm text-gray-600">
+                  <p>
+                    <i className="ri-archive-2-fill"></i> {item.qty} qty
+                  </p>
+                  <p>
+                    <i className="ri-weight-fill"></i> {item.weight} kg
+                  </p>
+                </div>
 
-            {/* ✅ TABLE FIXED */}
-            <DataTable<Booking>
-              columns={columns}
-              data={data || []}
-              rowKey="id"
-            />
-
+                {/* RIGHT */}
+                <div className="flex items-center gap-3">
+                  <StatusBadge status={item.status} />
+                </div>
+              </div>
+            ))}
             {loading && (
               <p className="text-sm text-gray-400 mt-2">Loading...</p>
             )}
+            {!loading && data?.length === 0 && (
+              <p className="text-sm text-gray-400">No data found</p>
+            )}
+            <div className="flex items-center justify-between relative">
+              {/* select option mengatur limit  */}
+              {/* 🔹 LIMIT SELECT */}
+              <div className="flex items-center gap-2 top-2 relative">
+                <span className="text-sm text-gray-500">Show</span>
+                <select
+                  value={limit}
+                  onChange={(e) => {
+                    setLimit(Number(e.target.value));
+                    setPage(1); // 🔥 reset page
+                  }}
+                  className="border rounded-lg px-2 py-1 text-sm"
+                >
+                  <option value={limit}>{limit}</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                  <option value={500}>500</option>
+                </select>
+                <span className="text-sm text-gray-500">entries</span>
+              </div>
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                setPage={setPage}
+              />
+            </div>
+          </div>
+          <div className=" w-2/4">
+            <div className="mb-4">
+              <div className="flex gap-4 w-full">
+                <Link href="/track-shipment" className="w-1/3 text-white">
+                  <Button type="submit" variant="blue" disabled={loading}>
+                    Tracking
+                  </Button>
+                </Link>
 
-            <Pagination page={page} totalPages={totalPages} setPage={setPage} />
+                <Link href="/jobs/quick-quote" className="w-2/3 ">
+                  <Button type="submit" disabled={loading} variant="yellow">
+                    <i className="ri-stack-line"></i> Quick Quote
+                  </Button>
+                </Link>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl border shadow-sm p-6 w-full">
+              {" "}
+              {/* inquery message*/}
+              <h2 className="text-2xl mb-4 font-semibold">Enquiry</h2>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <TextareaField
+                  rows={8}
+                  label="Your Question"
+                  name="enquiry"
+                  required={true}
+                />
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full rounded-full py-3 text-sm bg-gradient-to-r from-blue-500 to-indigo-500"
+                >
+                  {loadingMessage ? "Submitting..." : "Send"}
+                </Button>
+              </form>
+            </div>
           </div>
         </div>
       </div>

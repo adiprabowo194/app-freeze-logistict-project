@@ -6,6 +6,13 @@ interface Quote {
   id: number;
   connote_no: string;
   cargo_type: string;
+  originArea?: {
+    suburb?: string;
+  };
+
+  destinationArea?: {
+    suburb?: string;
+  };
   suburb_origin: string;
   suburb_destination: string;
   qty: number;
@@ -46,16 +53,8 @@ export default function useQuotes(params: Params) {
   const [loading, setLoading] = useState(false);
 
   // 🔹 destructure biar dependency lebih clean
-  const {
-    page,
-    limit,
-    search,
-    status,
-    sortBy,
-    order,
-    startDate,
-    endDate,
-  } = params;
+  const { page, limit, search, status, sortBy, order, startDate, endDate } =
+    params;
 
   useEffect(() => {
     const controller = new AbortController();
