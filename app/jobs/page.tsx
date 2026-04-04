@@ -37,7 +37,13 @@ export default function QuotesPage() {
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState("");
   const debouncedSearch = useDebounce(search);
-
+  const [statusList, setStatusList] = useState<string[]>([
+    "Booking",
+    "Delivered",
+    "Pickup",
+    "Delivery",
+    "Confirm",
+  ]);
   // 🔥 FETCH TABLE
 
   // 🔥 TABLE DATA
@@ -46,11 +52,13 @@ export default function QuotesPage() {
     limit,
     search: debouncedSearch,
     status,
+    statusList,
   });
 
   // 🔥 FETCH SUMMARY
   const { active, delivered, onprocess } = useSummary({
     search: debouncedSearch,
+    statusList,
   });
 
   return (
@@ -133,7 +141,7 @@ export default function QuotesPage() {
 
                   {/* MIDDLE */}
                   <div className="space-y-2 text-sm">
-                    <p>Temperature: {item.temperature}</p>
+                    <p>Temperature: {item.temperature || "-"}</p>
                     <p>
                       Unit:{" "}
                       <span className="text-blue-400 bg-blue-100 px-2 py-1 rounded-xl ">

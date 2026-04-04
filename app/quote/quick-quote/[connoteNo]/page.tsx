@@ -11,10 +11,12 @@ import SelectField from "@/components/SelectField";
 import TextareaField from "@/components/TextareaField";
 import Button from "@/components/Button";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 export default function QuickQuotePage() {
+  const params = useParams();
+  const connoteNo = params?.connoteNo as string;
   const router = useRouter();
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(3);
 
   // ================= LOCATION =================
   const [pickupSuburb, setPickupSuburb] = useState<any>(null);
@@ -25,31 +27,71 @@ export default function QuickQuotePage() {
 
   // ================= AUTO LOAD CUSTOMER =================
   useEffect(() => {
-    const fetchCustomer = async () => {
+    if (!connoteNo) return;
+
+    const loadData = async () => {
       try {
-        const res = await fetch("/api/customers/me");
-        const data = await res.json();
+        const res = await fetch(`/api/quotes/${connoteNo}`);
+        const result = await res.json();
 
-        // ✅ FIX: pakai field yang benar
-        if (data?.pickup_suburb_code) {
-          setPickupSuburb({
-            label: data.pickup_suburb_name, // tampil
-            value: data.pickup_suburb_code, // value harus code
-            area_code: data.pickup_suburb_code,
+        const q = result.data;
+
+        // 🔥 SET STATE
+        setPickupSuburb({
+          label: q.originArea?.suburb,
+          value: q.suburb_origin,
+          area_code: q.suburb_origin,
+        });
+
+        setDeliverySuburb({
+          label: q.destinationArea?.suburb,
+          value: q.suburb_destination,
+          area_code: q.suburb_destination,
+        });
+
+        setPickupAddress(q.pickup_address || "");
+        setDeliveryAddress(q.delivery_address || "");
+        setPickupDate(q.pickup_date?.split("T")[0] || "");
+
+        setReceiverName(q.receiver_name || "");
+        setReceiverPhone(q.receiver_phone || "");
+
+        const foundCarrier = carriers.find((c) => c.name === q.carrier);
+
+        if (foundCarrier) {
+          setSelectedCarrier(foundCarrier);
+        } else {
+          // fallback kalau tidak ketemu
+          setSelectedCarrier({
+            name: q.carrier,
+            pickup_eta: "-",
+            delivery_eta: "-",
+            price: 0,
           });
-
-          // ✅ auto isi address juga
-          setPickupAddress(data.pickup_address || "");
         }
-      } catch (err) {
+
+        // 🔥 cargos
+        const mappedCargo = q.packageDetails.map((c: any) => ({
+          cargoTemp: c.temperature,
+          cargoUnit: c.unit,
+          qty: c.qty,
+          weight: c.weight,
+          length: c.length,
+          width: c.width,
+          height: c.height,
+        }));
+
+        setCargoList(mappedCargo);
+      } catch (err: any) {
         console.error(err);
-        toast.error("Failed load customer data");
+        toast.error("Failed load quote detail");
       }
     };
 
-    fetchCustomer();
-  }, []);
-
+    loadData();
+    console.log("PARAMS:", params);
+    console.log("CONNOTE:", connoteNo);
+  }, [connoteNo, params]);
   // ================= CARGO =================
   const [cargoList, setCargoList] = useState([
     {
@@ -156,17 +198,18 @@ export default function QuickQuotePage() {
 
   const handleBack = () => setStep(step - 1);
 
-  // ================= SUBMIT =================
-  const handleSubmit = async (status: "Entry" | "Booking") => {
+  // ================= Edit & update =================
+  const handleEdit = async (status: "Entry" | "Booking") => {
     try {
-      if (step === 2 && !selectedCarrier) {
-        return toast.error("Please select carrier");
+      if (!connoteNo) {
+        return toast.error("Connote number not found");
       }
+
       const payload = {
         suburb_origin: pickupSuburb?.area_code,
         suburb_destination: deliverySuburb?.area_code,
         pickup_address: pickupAddress,
-        pickupDate: pickupDate, // ✅ pastikan ada state nya
+        pickup_date: pickupDate,
         delivery_address: deliveryAddress,
 
         receiver_name: receiverName,
@@ -192,8 +235,8 @@ export default function QuickQuotePage() {
         total_cbm: totalCBM,
       };
 
-      const res = await fetch("/api/cargo-quote", {
-        method: "POST",
+      const res = await fetch(`/api/quotes/${connoteNo}`, {
+        method: "PUT", // 🔥 UPDATE
         headers: {
           "Content-Type": "application/json",
         },
@@ -202,11 +245,9 @@ export default function QuickQuotePage() {
 
       const result = await res.json();
 
-      if (!res.ok) throw new Error(result.message);
+      if (!res.ok) throw new Error(result.error || "Update failed");
 
-      toast.success(
-        status === "Booking" ? "Quote submitted 🚀" : "Quote saved as draft 💾",
-      );
+      toast.success("Quote updated successfully 🚀");
 
       // 🔥 DELAY BIAR USER LIHAT TOAST
       setTimeout(() => {
@@ -527,11 +568,11 @@ export default function QuickQuotePage() {
               {/* RIGHT */}
               <div className="flex gap-3">
                 <Button
-                  onClick={() => handleSubmit("Entry")}
+                  onClick={() => handleEdit("Entry")}
                   className="px-6 py-2 rounded-lg w-50"
                   variant="yellow"
                 >
-                  Save Quote
+                  Edit & Save Quote
                 </Button>
 
                 <Button
@@ -552,14 +593,15 @@ export default function QuickQuotePage() {
               <Button
                 onClick={handleBack}
                 className="bg-white border border-gray-300 text-gray-700 px-6 py-2 rounded-lg"
+                variant="secondary"
               >
                 Back
               </Button>
 
               {/* RIGHT */}
               <Button
-                onClick={() => handleSubmit("Booking")}
-                className="bg-yellow-400 hover:bg-yellow-500 text-black px-12 py-3 rounded-lg text-base"
+                onClick={() => handleEdit("Booking")}
+                className="bg-blue-400 hover:bg-blue-500 text-black px-12 py-3 rounded-lg text-base"
               >
                 Submit Quote
               </Button>

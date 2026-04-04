@@ -8,50 +8,16 @@ import useQuotes from "@/hooks/useQuotes";
 import Link from "next/link";
 import useDebounce from "@/hooks/useDebounce";
 import Button from "@/components/Button";
-import TextareaField from "@/components/TextareaField";
 import StatusBadge from "@/components/StatusBadge";
 import Pagination from "@/components/Pagination";
 import TopNavbar from "@/components/TopNavbar";
 import MenuBars from "@/components/MenuBars";
 
-// 📦 TYPES
-interface Booking {
-  id: number;
-  connote_no: string;
-  cbm: string;
-
-  unit?: string; // 🔥 jadi optional
-
-  suburb_origin: string;
-  suburb_destination: string;
-  total_weight: number;
-  total_qty: number;
-  status: string;
-  createdAt: string;
-
-  originArea?: {
-    suburb?: string;
-    state?: string;
-  } | null;
-
-  destinationArea?: {
-    suburb?: string;
-    state?: string;
-  } | null;
-}
-
 export default function DashboardClient() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState("Entry");
   const [limit, setLimit] = useState(10);
-  const [statusList, setStatusList] = useState<string[]>([
-    "Booking",
-    "Delivered",
-    "Pickup",
-    "Delivery",
-    "Confirm",
-  ]);
   const debouncedSearch = useDebounce(search);
 
   const { data, totalPages, loading } = useQuotes({
@@ -59,11 +25,9 @@ export default function DashboardClient() {
     limit,
     search: debouncedSearch,
     status,
-    statusList, // 🔥 NEW
   });
 
   const [showAlert, setShowAlert] = useState(false);
-  const [loadingMessage, setLoadingMessage] = useState(false);
   useEffect(() => {
     const isLogin = sessionStorage.getItem("just_login");
     setPage(1);
@@ -79,42 +43,30 @@ export default function DashboardClient() {
       return () => clearTimeout(timer);
     }
   }, [limit]);
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoadingMessage(true);
-
-    const form = e.currentTarget;
-
-    const payload = {
-      enquiry: (form.enquiry as HTMLInputElement).value,
-    };
-
+  const handleDelete = async (connote_no: string) => {
     try {
-      const res = await fetch("/api/send-enquiry", {
-        method: "POST",
+      const confirmDelete = confirm("Are you sure delete this quote?");
+      if (!confirmDelete) return;
+
+      const res = await fetch("/api/cargo-quote/delete", {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ connote_no }),
       });
 
-      const data = await res.json();
+      const result = await res.json();
 
-      if (!res.ok) {
-        toast.error(data.message || "Failed send data");
-      } else {
-        toast.success("Your Enquiry successfully send");
+      if (!res.ok) throw new Error(result.error);
 
-        // ✅ reset form
-        form.reset();
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error("Something went wrong");
+      toast.success("Quote deleted 🗑️");
+
+      // 🔥 refresh data
+      window.location.reload();
+    } catch (err: any) {
+      toast.error(err.message);
     }
-
-    setLoadingMessage(false);
   };
 
   return (
@@ -138,27 +90,18 @@ export default function DashboardClient() {
 
         {/* 📊 RECENT JOBs */}
         <div className="flex gap-4 mb-6 px-8">
-          <div className="bg-white rounded-2xl border shadow-sm p-6 w-2/4">
+          <div className="bg-white rounded-2xl border shadow-sm p-6 w-3/4 space-y-6">
             {/* item list recent jobs */}
-            <h2 className="text-2xl mb-4 font-semibold">Recent Jobs</h2>
-            {/* toolbar */}
-            <div className="flex gap-3">
-              {/* STATUS */}
-              <select
-                value={status}
-                onChange={(e) => {
-                  setStatus(e.target.value);
-                  setPage(1); // 🔥 RESET PAGE
-                }}
-                className="border px-4 py-2 rounded-xl text-sm"
-              >
-                <option value="">All Status</option>
-
-                <option value="Delivered">Delivered</option>
-                <option value="booking">Booking</option>
-              </select>
-
-              {/* SEARCH */}
+            <div className="grid grid-cols-2 justify-between">
+              <h2 className="text-2xl mb-4 font-semibold">List Save Quotes</h2>
+              <Link href="/quote/quick-quote">
+                <Button type="submit" disabled={loading} variant="yellow">
+                  <i className="ri-stack-line"></i> Quick Quote
+                </Button>
+              </Link>
+            </div>
+            <div>
+              {" "}
               <input
                 placeholder="Search connote / origin / destination..."
                 value={search}
@@ -169,6 +112,7 @@ export default function DashboardClient() {
                 className="border px-3 py-2 rounded-xl text-sm w-full"
               />
             </div>
+            {/* toolbar */}
             {/* datatable */} {/* ✅ TABLE FIXED */}
             {(data || []).map((item) => (
               <div
@@ -176,8 +120,8 @@ export default function DashboardClient() {
                 className="flex items-center justify-between rounded-xl border bg-white p-4 shadow-sm hover:shadow-md transition my-4"
               >
                 {/* LEFT */}
-                <div>
-                  <p className="font-semibold text-sm text-blue-400">
+                <div className="space-y-3 ">
+                  <p className="font-semibold text-lg text-blue-400">
                     {item.connote_no}
                   </p>
                   <p className="text-xs text-gray-500">
@@ -187,22 +131,40 @@ export default function DashboardClient() {
                     {item.createdAt
                       ? new Date(item.createdAt).toLocaleDateString()
                       : "-"}
-                  </p>
+                  </p>{" "}
                 </div>
 
                 {/* MIDDLE */}
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-gray-600 flex flex-col space-y-3 ">
                   <p>
                     <i className="ri-archive-2-fill"></i> {item.total_qty} qty
                   </p>
                   <p>
                     <i className="ri-weight-fill"></i> {item.total_weight} kg
+                  </p>{" "}
+                  <p className="gap-2">
+                    Status : <StatusBadge status={item.status} />
                   </p>
                 </div>
 
                 {/* RIGHT */}
-                <div className="flex items-center gap-3">
-                  <StatusBadge status={item.status} />
+                <div className="flex flex-col items-center gap-3 space-y-3">
+                  <Link href={`/quote/quick-quote/${item.connote_no}`}>
+                    <Button
+                      type="button"
+                      disabled={loading}
+                      variant="primary"
+                      className="px-2 text-sm"
+                    >
+                      Process
+                    </Button>
+                  </Link>
+                  <button
+                    onClick={() => handleDelete(item.connote_no)}
+                    className="text-red-500 text-sm"
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
             ))}
@@ -237,43 +199,6 @@ export default function DashboardClient() {
                 totalPages={totalPages}
                 setPage={setPage}
               />
-            </div>
-          </div>
-          <div className=" w-2/4">
-            <div className="mb-4">
-              <div className="flex gap-4 w-full">
-                <Link href="/track-shipment" className="w-1/3 text-white">
-                  <Button type="submit" variant="blue" disabled={loading}>
-                    Tracking
-                  </Button>
-                </Link>
-
-                <Link href="/quote/quick-quote" className="w-2/3 ">
-                  <Button type="submit" disabled={loading} variant="yellow">
-                    <i className="ri-stack-line"></i> Quick Quote
-                  </Button>
-                </Link>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl border shadow-sm p-6 w-full">
-              {" "}
-              {/* inquery message*/}
-              <h2 className="text-2xl mb-4 font-semibold">Enquiry</h2>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <TextareaField
-                  rows={8}
-                  label="Your Question"
-                  name="enquiry"
-                  required={true}
-                />
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full rounded-full py-3 text-sm bg-gradient-to-r from-blue-500 to-indigo-500"
-                >
-                  {loadingMessage ? "Submitting..." : "Send"}
-                </Button>
-              </form>
             </div>
           </div>
         </div>

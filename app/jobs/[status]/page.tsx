@@ -14,20 +14,21 @@ import Pagination from "@/components/Pagination";
 // 📦 TYPE
 interface Booking {
   id: number;
-  unit?: string; // bisa undefined
   connote_no: string;
-  cargo_type: string;
-  weight: number;
-  qty: number;
   status: string;
   createdAt: string;
 
+  temperature?: string;
+  unit?: string;
+  qty?: number;
+  weight?: number;
+
   originArea?: {
-    suburb?: string; // bisa undefined
+    suburb?: string;
   };
 
   destinationArea?: {
-    suburb?: string; // bisa undefined
+    suburb?: string;
   };
 }
 
@@ -39,6 +40,13 @@ export default function QuotesByStatusPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+  const [statusList, setStatusList] = useState<string[]>([
+    "Booking",
+    "Delivered",
+    "Pickup",
+    "Delivery",
+    "Confirm",
+  ]);
   const debouncedSearch = useDebounce(search);
 
   // 🔥 NORMALIZE STATUS (penting)
@@ -55,12 +63,14 @@ export default function QuotesByStatusPage() {
     limit,
     search: debouncedSearch,
     status,
+    statusList,
   });
 
   // 🔥 SUMMARY
   const { active, delivered, onprocess } = useSummary({
     search: debouncedSearch,
     status,
+    statusList,
   });
 
   return (
@@ -137,7 +147,7 @@ export default function QuotesByStatusPage() {
 
                   {/* MIDDLE */}
                   <div className="space-y-2 text-sm">
-                    <p>Temperature: {item.cargo_type || "-"}</p>
+                    <p>Temperature: {item.temperature || "-"}</p>
                     <p>
                       Unit:{" "}
                       <span className="text-blue-400 bg-blue-100 px-2 py-1 rounded-xl">

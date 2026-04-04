@@ -1,13 +1,15 @@
-// /app/api/cargo-quote/route.ts
 import { NextRequest, NextResponse } from "next/server";
+import { sequelize } from "@/lib/sequelize";
 import Quotes from "@/models/Quotes";
+import PackageDetails from "@/models/PackageDetail";
 import { getSessionUser } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
+  const t = await sequelize.transaction();
+
   try {
     const body = await req.json();
 
-    // cek session
     // ================= SESSION =================
     const user = await getSessionUser();
 
@@ -24,52 +26,92 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validasi sederhana
-    const requiredFields = [
-      "temperature",
-      "unit",
-      "qty",
-      "weight",
-      "pickup_date",
-      "receiver_name",
-      "receiver_phone",
-      "cargo_category",
-      "suburb_origin",
-      "suburb_destination",
-      "pickup_address",
-      "delivery_address",
-      // "customer_code",
-      // "user_inp",
-    ];
+    const {
+      suburb_origin,
+      suburb_destination,
+      pickup_address,
+      delivery_address,
+      receiver_name,
+      receiver_phone,
+      cargos,
+      total_qty,
+      total_weight,
+      total_cbm,
+      carrier,
+      status,
+      pickupDate,
+    } = body;
 
-    for (const field of requiredFields) {
-      if (!body[field]) {
-        return NextResponse.json(
-          { message: `Field ${field} is required` },
-          { status: 400 },
-        );
-      }
+    // 🔥 VALIDASI
+    if (!suburb_origin || !suburb_destination) {
+      throw new Error("Suburb wajib diisi");
     }
 
-    // Generate connote_no di server
-    const connote_no = `CN${Date.now()}${Math.floor(Math.random() * 1000)}`;
+    if (!cargos || cargos.length === 0) {
+      throw new Error("Cargo tidak boleh kosong");
+    }
 
-    // Simpan ke database
-    const newQuote = await Quotes.create({
-      ...body,
-      // 🔥 override dari session
-      customer_code: customerCode,
-      user_inp: user.username || user.username, // sesuaikan field user kamu
+    // 🔥 generate connote
+    const connote_no = `CN${Date.now()}`;
+
+    // ================= INSERT QUOTES =================
+    const newQuote = await Quotes.create(
+      {
+        connote_no,
+        suburb_origin,
+        suburb_destination,
+        pickup_address,
+        delivery_address,
+        receiver_name,
+        receiver_phone,
+        total_qty,
+        total_weight,
+        total_cbm,
+        carrier: carrier,
+        pickup_date: pickupDate,
+
+        customer_code: customerCode,
+        user_inp: user.username,
+        status,
+        is_active: 1,
+      },
+      { transaction: t },
+    );
+
+    // ================= INSERT PACKAGE DETAILS =================
+    const detailPayload = cargos.map((c: any) => ({
       connote_no,
-      status: "Booking", // default status
+      temperature: c.temperature,
+      unit: c.unit,
+      qty: c.qty,
+      weight: c.weight,
+      length: c.length,
+      width: c.width,
+      height: c.height,
+      user_inp: user.username,
+    }));
+
+    await PackageDetails.bulkCreate(detailPayload, {
+      transaction: t,
     });
 
+    await t.commit();
+
     return NextResponse.json(
-      { message: "Quote successfully created", data: newQuote },
+      {
+        message: "Quote created successfully",
+        data: {
+          quote: newQuote,
+          details: detailPayload,
+        },
+      },
       { status: 201 },
     );
   } catch (error: any) {
+    await t.rollback();
+
     console.error(error);
+
     return NextResponse.json(
       { message: error.message || "Something went wrong" },
       { status: 500 },

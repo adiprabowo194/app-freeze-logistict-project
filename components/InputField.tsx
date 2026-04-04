@@ -10,6 +10,8 @@ type InputFieldProps = {
   error?: string;
   value?: string | number;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  readOnly?: boolean; // ✅ tambahan
+  disabled?: boolean; // ✅ tambahan
 };
 
 const InputField: React.FC<InputFieldProps> = ({
@@ -22,6 +24,8 @@ const InputField: React.FC<InputFieldProps> = ({
   error,
   value,
   onChange,
+  readOnly,
+  disabled,
 }) => {
   return (
     <div className="flex flex-col gap-2 w-full">
@@ -37,11 +41,15 @@ const InputField: React.FC<InputFieldProps> = ({
         type={type}
         placeholder={placeholder}
         required={required}
-        value={value}
+        value={value ?? ""} // ✅ biar tidak undefined
         onChange={onChange}
-        className={`px-4 py-2 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 ${
-          error ? "border-red-500 focus:ring-red-500" : "focus:ring-blue-500"
-        } ${className}`}
+        readOnly={readOnly || !onChange} // 🔥 AUTO FIX ERROR
+        disabled={disabled}
+        className={`px-4 py-2 border border-gray-400 rounded-lg focus:outline-none focus:ring-2
+        ${error ? "border-red-500 focus:ring-red-500" : "focus:ring-blue-500"}
+        ${disabled ? "bg-gray-100 cursor-not-allowed" : ""}
+        ${readOnly ? "bg-gray-50" : ""}
+        ${className}`}
       />
 
       {error && <span className="text-sm text-red-500">{error}</span>}

@@ -13,6 +13,7 @@ interface Params {
   endDate?: string;
   status?: string;
   search?: string;
+  statusList?: string[]; // 🔥 NEW
 }
 
 export default function useSummary(params: Params) {
@@ -25,7 +26,7 @@ export default function useSummary(params: Params) {
   const [loading, setLoading] = useState(false);
 
   // 🔥 destructure biar dependency clean
-  const { startDate, endDate, status, search } = params;
+  const { startDate, endDate, status, search, statusList } = params;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -50,10 +51,13 @@ export default function useSummary(params: Params) {
           }
         });
 
-        const res = await fetch(
-          `/api/dashboard/summary?${query.toString()}`,
-          { signal: controller.signal }
-        );
+        if (statusList && statusList.length > 0) {
+          query.append("statusList", statusList.join(","));
+        }
+
+        const res = await fetch(`/api/dashboard/summary?${query.toString()}`, {
+          signal: controller.signal,
+        });
 
         if (!res.ok) throw new Error("API error");
 

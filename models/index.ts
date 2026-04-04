@@ -2,6 +2,7 @@ import CustomersModel from "./Customers";
 import CoverageAreasModel from "./CoverageAreas";
 import QuotesModel from "./Quotes";
 import TrackingHistoryModel from "./TrackingHistory";
+import PackageDetailModel from "./PackageDetail";
 import UsersModel from "./Users";
 import ResetTokensModel from "./ResetTokens"; // ✅ FIX IMPORT
 
@@ -11,6 +12,7 @@ const CoverageAreas = CoverageAreasModel;
 const Quotes = QuotesModel;
 const TrackingHistory = TrackingHistoryModel;
 const Users = UsersModel;
+const PackageDetails = PackageDetailModel;
 const ResetTokens = ResetTokensModel; // ✅ sekarang valid
 
 // ================= RELATIONS =================
@@ -67,6 +69,18 @@ function initRelations() {
     targetKey: "email",
     as: "user",
   });
+  // Quotes -> QuoteDetails (1 to many)
+  Quotes.hasMany(PackageDetails, {
+    foreignKey: "connote_no",
+    sourceKey: "connote_no",
+    as: "packageDetails",
+  });
+
+  PackageDetails.belongsTo(Quotes, {
+    foreignKey: "connote_no",
+    targetKey: "connote_no",
+    as: "quote",
+  });
 }
 
 // ================= INIT =================
@@ -80,4 +94,5 @@ export {
   TrackingHistory,
   Users,
   ResetTokens,
+  PackageDetails,
 };

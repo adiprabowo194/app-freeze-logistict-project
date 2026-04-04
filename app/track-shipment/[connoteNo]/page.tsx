@@ -23,6 +23,7 @@ interface Tracking {
   destination: string;
   weight: number;
   qty: number;
+  temperature: string;
   unit: string;
   history: TrackingHistoryItem[];
 }
@@ -105,7 +106,7 @@ export default function TrackShipmentPage() {
       <TopNavbar />
       <MenuBars />
 
-      <div className="p-6 px-16 space-y-6">
+      <div className="p-6 px-16 space-y-6 ">
         {/* 🔍 SEARCH */}
         <div className="bg-white p-4 rounded-2xl border">
           <form onSubmit={handleSearch} className="flex gap-3">
@@ -154,73 +155,45 @@ export default function TrackShipmentPage() {
         {/* DATA */}
         {!loading && data && (
           <>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* LEFT */}
-              <div className="space-y-6">
-                {/* SUMMARY */}
-                <div className="bg-white p-6 rounded-2xl border space-y-4">
+            <div className="flex flex-row gap-6">
+              {/* LEFT SUMMARY */}
+              <div className="bg-white p-6 rounded-2xl border w-1/3">
+                <div className="space-y-3 text-sm">
                   <h2 className="font-semibold text-lg">Shipment Details</h2>
-
-                  <div className="space-y-3 text-sm">
-                    <div>
-                      <p className="text-gray-500">Connote</p>
-                      <p className="font-semibold">{data.connote_no}</p>
-                    </div>
-
-                    <div>
-                      <p className="text-gray-500">Status</p>
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                          data.status,
-                        )}`}
-                      >
-                        {data.status}
-                      </span>
-                    </div>
-
-                    <div>
-                      <p className="text-gray-500">Origin</p>
-                      <p>{data.origin}</p>
-                    </div>
-
-                    <div>
-                      <p className="text-gray-500">Destination</p>
-                      <p>{data.destination}</p>
-                    </div>
+                  <div>
+                    <p className="text-gray-500">Connote</p>
+                    <p className="font-semibold">{data.connote_no}</p>
                   </div>
-                </div>
 
-                {/* 🔥 SHIPMENT INFO (UPDATED UI) */}
-                <div className="bg-white p-6 rounded-2xl border space-y-4">
-                  <h2 className="font-semibold text-lg">Shipment Info</h2>
+                  <div>
+                    <p className="text-gray-500">Status</p>
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                        data.status,
+                      )}`}
+                    >
+                      {data.status}
+                    </span>
+                  </div>
 
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <div className="bg-gray-50 p-4 rounded-xl text-center shadow-sm">
-                      <p className="text-gray-500 text-xs">Weight</p>
-                      <p className="font-semibold text-blue-600 text-lg">
-                        {data.weight} kg
-                      </p>
-                    </div>
+                  <div>
+                    <p className="text-gray-500">Origin</p>
+                    <p>{data.origin}</p>
+                  </div>
 
-                    <div className="bg-gray-50 p-4 rounded-xl text-center shadow-sm">
-                      <p className="text-gray-500 text-xs">Quantity</p>
-                      <p className="font-semibold text-lg">{data.qty}</p>
-                    </div>
-
-                    <div className="bg-gray-50 p-4 rounded-xl text-center shadow-sm">
-                      <p className="text-gray-500 text-xs">Unit</p>
-                      <p className="font-semibold text-lg">{data.unit}</p>
-                    </div>
+                  <div>
+                    <p className="text-gray-500">Destination</p>
+                    <p>{data.destination}</p>
                   </div>
                 </div>
               </div>
-
               {/* RIGHT TIMELINE */}
-              <div className="lg:col-span-2">
+              <div className="lg:col-span-2 w-2/3">
                 <div className="bg-white p-6 rounded-2xl border">
-                  <h2 className="font-semibold mb-6">Tracking History</h2>
-
-                  <div className="space-y-6">
+                  <div className="space-y-6 p-6">
+                    <h2 className="font-semibold mb-6 text-lg">
+                      Tracking History
+                    </h2>
                     {[...data.history].reverse().map((item, index) => (
                       <div key={index} className="flex gap-4">
                         <div className="flex flex-col items-center">
@@ -244,59 +217,86 @@ export default function TrackShipmentPage() {
                 </div>
               </div>
             </div>
+            <div className="flex flex-row gap-6">
+              {/* 🔥 SHIPMENT INFO (UPDATED UI) */}
+              <div className="bg-white p-6 rounded-2xl border w-1/3 space-y-3">
+                <h2 className="font-semibold text-lg">Shipment Info</h2>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="bg-gray-50 p-4 rounded-xl text-center shadow-sm">
+                    <p className="text-gray-500 text-xs">Weight</p>
+                    <p className="font-semibold text-blue-600 text-lg">
+                      {data.weight} kg
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-xl text-center shadow-sm">
+                    <p className="text-gray-500 text-xs">Quantity</p>
+                    <p className="font-semibold text-lg">{data.qty}</p>
+                  </div>
 
-            {/* TABLE */}
-            <div className="bg-white p-6 rounded-2xl border">
-              <h2 className="font-semibold mb-4">Tracking Logs (System)</h2>
-
-              <div className="overflow-x-auto max-h-[400px]">
-                <table className="w-full text-sm border">
-                  <thead className="bg-gray-100 sticky top-0">
-                    <tr>
-                      <th className="p-2 border">Connote</th>
-                      <th className="p-2 border">Status</th>
-                      <th className="p-2 border">Description</th>
-                      <th className="p-2 border">Created</th>
-                      <th className="p-2 border">Updated</th>
-                      <th className="p-2 border">User</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {data.history.map((item, index) => (
-                      <tr
-                        key={index}
-                        className={`hover:bg-gray-50 ${
-                          index === data.history.length - 1 ? "bg-green-50" : ""
-                        }`}
-                      >
-                        <td className="p-2 border">{item.connote_no}</td>
-
-                        <td className="p-2 border">
-                          <span
-                            className={`px-2 py-1 rounded text-xs ${getStatusColor(
-                              item.status,
-                            )}`}
-                          >
-                            {item.status}
-                          </span>
-                        </td>
-
-                        <td className="p-2 border">{item.description}</td>
-
-                        <td className="p-2 border">
-                          {formatDate(item.createdAt)}
-                        </td>
-
-                        <td className="p-2 border">
-                          {formatDate(item.updatedAt)}
-                        </td>
-
-                        <td className="p-2 border">{item.user_inp}</td>
+                  <div className="bg-gray-50 p-4 rounded-xl text-center shadow-sm">
+                    <p className="text-gray-500 text-xs">Temperature</p>
+                    <p className="font-semibold text-lg">{data.temperature}</p>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-xl text-center shadow-sm">
+                    <p className="text-gray-500 text-xs">Unit</p>
+                    <p className="font-semibold text-lg">{data.unit}</p>
+                  </div>
+                </div>
+              </div>
+              {/* RIGHT TABLE */}
+              <div className="bg-white p-6 rounded-2xl border w-2/3 space-y-6">
+                <div className="overflow-x-scroll space-y-6">
+                  <h2 className="font-semibold mb-4">Tracking Logs (System)</h2>
+                  <table className="text-sm border space-y-6">
+                    <thead className="bg-gray-100 sticky top-0">
+                      <tr>
+                        <th className="p-2 border">Connote</th>
+                        <th className="p-2 border">Status</th>
+                        <th className="p-2 border">Description</th>
+                        <th className="p-2 border">Created</th>
+                        <th className="p-2 border">Updated</th>
+                        <th className="p-2 border">User</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+
+                    <tbody>
+                      {data.history.map((item, index) => (
+                        <tr
+                          key={index}
+                          className={`hover:bg-gray-50 ${
+                            index === data.history.length - 1
+                              ? "bg-green-50"
+                              : ""
+                          }`}
+                        >
+                          <td className="p-2 border">{item.connote_no}</td>
+
+                          <td className="p-2 border">
+                            <span
+                              className={`px-2 py-1 rounded text-xs ${getStatusColor(
+                                item.status,
+                              )}`}
+                            >
+                              {item.status}
+                            </span>
+                          </td>
+
+                          <td className="p-2 border">{item.description}</td>
+
+                          <td className="p-2 border">
+                            {formatDate(item.createdAt)}
+                          </td>
+
+                          <td className="p-2 border">
+                            {formatDate(item.updatedAt)}
+                          </td>
+
+                          <td className="p-2 border">{item.user_inp}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </>
