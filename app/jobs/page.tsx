@@ -11,7 +11,7 @@ import useDebounce from "@/hooks/useDebounce";
 import Link from "next/link";
 import Pagination from "@/components/Pagination";
 // 📦 TYPE (pakai JOIN)
-interface Booking {
+interface Quote {
   id: number;
   unit?: string; // bisa undefined
   connote_no: string;
@@ -117,7 +117,7 @@ export default function QuotesPage() {
             ) : data.length === 0 ? (
               <p className="text-gray-400 text-sm">No data found</p>
             ) : (
-              data.map((item: Booking) => (
+              data.map((item: Quote) => (
                 <div
                   key={item.id}
                   className="bg-white rounded-2xl border p-5 flex justify-between items-start"
