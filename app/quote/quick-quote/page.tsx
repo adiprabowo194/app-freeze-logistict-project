@@ -162,6 +162,17 @@ export default function QuickQuotePage() {
       if (step === 2 && !selectedCarrier) {
         return toast.error("Please select carrier");
       }
+      if (
+        step === 3 &&
+        (!pickupDate?.trim() ||
+          !receiverName?.trim() ||
+          !receiverPhone?.trim() ||
+          !deliveryAddress?.trim())
+      ) {
+        return toast.error(
+          "Please input Pickup Date, Receiver name & Receiver phone",
+        );
+      }
       const payload = {
         suburb_origin: pickupSuburb?.area_code,
         suburb_destination: deliverySuburb?.area_code,
@@ -552,6 +563,7 @@ export default function QuickQuotePage() {
               <Button
                 onClick={handleBack}
                 className="bg-white border border-gray-300 text-gray-700 px-6 py-2 rounded-lg"
+                variant="secondary"
               >
                 Back
               </Button>
@@ -559,7 +571,7 @@ export default function QuickQuotePage() {
               {/* RIGHT */}
               <Button
                 onClick={() => handleSubmit("Booking")}
-                className="bg-yellow-400 hover:bg-yellow-500 text-black px-12 py-3 rounded-lg text-base"
+                className="bg-blue-400 hover:bg-blue-500 text-black px-12 py-3 rounded-lg text-base"
               >
                 Submit Quote
               </Button>

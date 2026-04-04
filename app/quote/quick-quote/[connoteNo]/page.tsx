@@ -204,7 +204,17 @@ export default function QuickQuotePage() {
       if (!connoteNo) {
         return toast.error("Connote number not found");
       }
-
+      if (
+        step === 3 &&
+        (!pickupDate?.trim() ||
+          !receiverName?.trim() ||
+          !receiverPhone?.trim() ||
+          !deliveryAddress?.trim())
+      ) {
+        return toast.error(
+          "Please input Pickup Date, Receiver name & Receiver phone",
+        );
+      }
       const payload = {
         suburb_origin: pickupSuburb?.area_code,
         suburb_destination: deliverySuburb?.area_code,

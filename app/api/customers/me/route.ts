@@ -37,18 +37,19 @@ export async function GET() {
             {
               model: CoverageAreas,
               as: "pickupArea",
-              attributes: ["area_code", "suburb"], // 🔥 ambil nama suburb
+              attributes: ["area_code", "suburb"],
             },
           ],
         },
       ],
     });
 
+    // 🔥 FIX DISINI
+    const customer = (userLogin as any).customer;
+
     if (!userLogin) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
-
-    const customer = userLogin.customer;
 
     return NextResponse.json({
       pickup_suburb_code: customer?.pickup_suburb_code,
