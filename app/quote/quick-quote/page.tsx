@@ -15,6 +15,16 @@ import { useRouter } from "next/navigation";
 export default function QuickQuotePage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
+  // ================= TYPE =================
+  type Cargo = {
+    cargoTemp: string;
+    cargoUnit: string;
+    qty: string;
+    weight: string;
+    length: string;
+    width: string;
+    height: string;
+  };
 
   // ================= LOCATION =================
   const [pickupSuburb, setPickupSuburb] = useState<any>(null);
@@ -63,7 +73,12 @@ export default function QuickQuotePage() {
     },
   ]);
 
-  const handleChange = (index: number, field: string, value: any) => {
+  // 🔥 FIX DISINI (TYPE SAFE)
+  const handleChange = <K extends keyof Cargo>(
+    index: number,
+    field: K,
+    value: Cargo[K],
+  ) => {
     const updated = [...cargoList];
     updated[index][field] = value;
     setCargoList(updated);
@@ -267,7 +282,6 @@ export default function QuickQuotePage() {
                   label="Sending Suburb *"
                   value={pickupSuburb}
                   onChange={setPickupSuburb}
-                  disabled // 🔥 default dari session
                 />
 
                 <SelectSearch
@@ -298,6 +312,7 @@ export default function QuickQuotePage() {
                   <div className="grid grid-cols-2 gap-2 md:col-span-3">
                     <SelectField
                       label="Temperature *"
+                      name="cargoTemp"
                       value={cargo.cargoTemp}
                       onChange={(val) => handleChange(index, "cargoTemp", val)}
                       options={[
@@ -307,6 +322,7 @@ export default function QuickQuotePage() {
                     />
                     <SelectField
                       label="Unit *"
+                      name="cargoUnit"
                       value={cargo.cargoUnit}
                       onChange={(val) => handleChange(index, "cargoUnit", val)}
                       options={[
@@ -319,12 +335,14 @@ export default function QuickQuotePage() {
                   <div className="grid grid-cols-2 gap-2 md:col-span-2">
                     <InputField
                       label="Qty *"
+                      name="qty"
                       value={cargo.qty}
                       onChange={(e) =>
                         handleChange(index, "qty", e.target.value)
                       }
                     />
                     <InputField
+                      name="weight"
                       label="Weight (kg)*"
                       value={cargo.weight}
                       onChange={(e) =>
@@ -335,6 +353,7 @@ export default function QuickQuotePage() {
 
                   <div className="grid grid-cols-3 gap-2 md:col-span-2">
                     <InputField
+                      name="length"
                       label="Length (cm)*"
                       value={cargo.length}
                       onChange={(e) =>
@@ -342,6 +361,7 @@ export default function QuickQuotePage() {
                       }
                     />
                     <InputField
+                      name="width"
                       label="Width (cm)*"
                       value={cargo.width}
                       onChange={(e) =>
@@ -349,6 +369,7 @@ export default function QuickQuotePage() {
                       }
                     />
                     <InputField
+                      name="height"
                       label="Height (cm)*"
                       value={cargo.height}
                       onChange={(e) =>
@@ -409,25 +430,25 @@ export default function QuickQuotePage() {
                   label="Sending Suburb *"
                   value={pickupSuburb}
                   onChange={setPickupSuburb}
-                  disabled
                 />
 
                 <SelectSearch
                   label="Receiver Suburb *"
                   value={deliverySuburb}
                   onChange={setDeliverySuburb}
-                  disabled
                 />
               </div>
 
               <div className="grid md:grid-cols-2 gap-4 mt-4">
                 <TextareaField
+                  name="pickupAddress"
                   label="Pickup Address *"
                   value={pickupAddress}
                   onChange={(e) => setPickupAddress(e.target.value)}
                 />
 
                 <TextareaField
+                  name="deliveryAddress"
                   label="Receiver Address *"
                   value={deliveryAddress}
                   onChange={(e) => setDeliveryAddress(e.target.value)}
@@ -446,22 +467,53 @@ export default function QuickQuotePage() {
                 >
                   <div className="grid grid-cols-2 gap-2 md:col-span-3">
                     <InputField
+                      name="cargoTemp"
                       label="Temperature"
                       value={cargo.cargoTemp}
                       disabled
                     />
-                    <InputField label="Unit" value={cargo.cargoUnit} disabled />
+                    <InputField
+                      label="Unit"
+                      name="unit"
+                      value={cargo.cargoUnit}
+                      disabled
+                    />
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 md:col-span-2">
-                    <InputField label="Qty" value={cargo.qty} disabled />
-                    <InputField label="Weight" value={cargo.weight} disabled />
+                    <InputField
+                      label="Qty"
+                      name="qty"
+                      value={cargo.qty}
+                      disabled
+                    />
+                    <InputField
+                      label="Weight"
+                      name="weight"
+                      value={cargo.weight}
+                      disabled
+                    />
                   </div>
 
                   <div className="grid grid-cols-3 gap-2 md:col-span-2">
-                    <InputField label="Length" value={cargo.length} disabled />
-                    <InputField label="Width" value={cargo.width} disabled />
-                    <InputField label="Height" value={cargo.height} disabled />
+                    <InputField
+                      label="Length"
+                      name="length"
+                      value={cargo.length}
+                      disabled
+                    />
+                    <InputField
+                      label="Width"
+                      name="width"
+                      value={cargo.width}
+                      disabled
+                    />
+                    <InputField
+                      label="Height"
+                      name="height"
+                      value={cargo.height}
+                      disabled
+                    />
                   </div>
                 </div>
               ))}
@@ -500,18 +552,21 @@ export default function QuickQuotePage() {
 
               <div className="grid md:grid-cols-3 gap-4">
                 <InputField
+                  name="pickupDate"
                   type="date"
                   label="Pickup Date *"
                   value={pickupDate}
                   onChange={(e) => setPickupDate(e.target.value)}
                 />
                 <InputField
+                  name="receiverName"
                   label="Receiver Name *"
                   value={receiverName}
                   onChange={(e) => setReceiverName(e.target.value)}
                 />
 
                 <InputField
+                  name="receiverPhone"
                   label="Receiver Phone *"
                   value={receiverPhone}
                   onChange={(e) => setReceiverPhone(e.target.value)}
