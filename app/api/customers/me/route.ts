@@ -37,7 +37,7 @@ export async function GET() {
             {
               model: CoverageAreas,
               as: "pickupArea",
-              attributes: ["area_code", "suburb"],
+              attributes: ["area_code", "suburb", "postcode", "state"],
             },
           ],
         },
@@ -55,6 +55,8 @@ export async function GET() {
       pickup_suburb_code: customer?.pickup_suburb_code,
       pickup_suburb_name: customer?.pickupArea?.suburb, // 🔥 ini yang kamu butuh
       pickup_address: customer?.pickup_address,
+      postcode: customer?.pickupArea?.postcode,
+      state: customer?.pickupArea?.state,
     });
   } catch (error) {
     console.error(error);

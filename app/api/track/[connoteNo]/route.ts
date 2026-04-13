@@ -76,6 +76,7 @@ export async function GET(
       // optional
       weight: firstDetail?.weight || quote?.weight || 0,
       qty: firstDetail?.qty || quote?.qty || 0,
+      receiver_name: quote?.receiver_name || 0,
 
       history: rows.map((row: any) => ({
         connote_no: row.get("connote_no"),

@@ -4,7 +4,10 @@ import QuotesModel from "./Quotes";
 import TrackingHistoryModel from "./TrackingHistory";
 import PackageDetailModel from "./PackageDetail";
 import UsersModel from "./Users";
-import ResetTokensModel from "./ResetTokens"; // ✅ FIX IMPORT
+import ResetTokensModel from "./ResetTokens";
+
+import CarrierModel from "./Carriers";
+import ShippingRatesModel from "./ShippingRates";
 
 // ================= INIT MODEL =================
 const Customers = CustomersModel;
@@ -14,6 +17,9 @@ const TrackingHistory = TrackingHistoryModel;
 const Users = UsersModel;
 const PackageDetails = PackageDetailModel;
 const ResetTokens = ResetTokensModel; // ✅ sekarang valid
+
+const Carriers = CarrierModel;
+const ShippingRates = ShippingRatesModel;
 
 // ================= RELATIONS =================
 function initRelations() {
@@ -81,6 +87,22 @@ function initRelations() {
     targetKey: "connote_no",
     as: "quote",
   });
+
+  // ================= CARRIERS & SHIPPING RATES =================
+
+  // 1. Carriers -> ShippingRates (1 to many)
+  Carriers.hasMany(ShippingRates, {
+    foreignKey: "carrier_code", // field di ShippingRates
+    sourceKey: "carrier_code", // field di Carriers
+    as: "rates",
+  });
+
+  // 2. ShippingRates -> Carriers (many to 1)
+  ShippingRates.belongsTo(Carriers, {
+    foreignKey: "carrier_code", // field di ShippingRates
+    targetKey: "carrier_code", // field di Carriers
+    as: "carrier_details",
+  });
 }
 
 // ================= INIT =================
@@ -95,4 +117,6 @@ export {
   Users,
   ResetTokens,
   PackageDetails,
+  Carriers,
+  ShippingRates,
 };
