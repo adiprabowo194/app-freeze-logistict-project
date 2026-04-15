@@ -103,6 +103,22 @@ function initRelations() {
     targetKey: "carrier_code", // field di Carriers
     as: "carrier_details",
   });
+
+  // 🔥 TAMBAHKAN RELASI QUOTES KE CARRIER & SHIPPING RATES 🔥
+
+  // 1. Hubungkan Quotes langsung ke Carrier berdasarkan Carrier
+  Quotes.belongsTo(Carriers, {
+    foreignKey: "carrier", // field 'carrier' di table quotes
+    targetKey: "carrier_code", // field 'name' di table carriers
+    as: "carrierDetail",
+  });
+  // 2. Hubungkan Quotes ke ShippingRates berdasarkan rate_id
+  // Ini penting agar Anda bisa menarik detail harga asli atau service level
+  Quotes.belongsTo(ShippingRates, {
+    foreignKey: "rate_id", // field 'rate_id' di table quotes
+    targetKey: "id", // field primary key di table shipping_rates (sesuaikan jika namanya 'id' atau 'rate_id')
+    as: "rateDetails",
+  });
 }
 
 // ================= INIT =================

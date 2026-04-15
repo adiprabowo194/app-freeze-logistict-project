@@ -131,7 +131,6 @@ export default function QuickQuotePage() {
 
   const fetchRates = async () => {
     try {
-      console.log(pickupSuburb);
       if (!pickupSuburb || !deliverySuburb) return;
 
       setLoadingCarrier(true);
@@ -154,6 +153,7 @@ export default function QuickQuotePage() {
       });
 
       const data = await res.json();
+      console.log(data);
 
       if (!res.ok) throw new Error(data.message);
 
@@ -227,6 +227,10 @@ export default function QuickQuotePage() {
 
         carrier: selectedCarrier?.name,
         price: selectedCarrier?.price,
+        rate_id: selectedCarrier?.rate_id,
+
+        delivery_eta: selectedCarrier?.delivery_eta,
+        pickup_eta: selectedCarrier?.pickup_eta,
 
         status,
 
@@ -244,6 +248,7 @@ export default function QuickQuotePage() {
         total_weight: totalWeight,
         total_cbm: totalCBM,
       };
+      console.log(payload);
 
       const res = await fetch("/api/cargo-quote", {
         method: "POST",

@@ -40,6 +40,10 @@ export async function POST(req: NextRequest) {
       carrier,
       status,
       pickupDate,
+      delivery_eta,
+      pickup_eta,
+      price,
+      rate_id,
     } = body;
 
     // 🔥 VALIDASI
@@ -69,7 +73,10 @@ export async function POST(req: NextRequest) {
         total_cbm,
         carrier: carrier,
         pickup_date: pickupDate,
-
+        eta_pickup: pickup_eta,
+        eta_delivery: delivery_eta,
+        price_all_in: price,
+        rate_id: rate_id,
         customer_code: customerCode,
         user_inp: user.username,
         status,

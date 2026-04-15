@@ -32,6 +32,7 @@ export default function QuickQuotePage() {
   const [pickupSuburb, setPickupSuburb] = useState<any>(null);
   const [deliverySuburb, setDeliverySuburb] = useState<any>(null);
   const [pickupDate, setPickupDate] = useState("");
+  const [saveQuote, setSaveQuote] = useState(true);
   const [pickupAddress, setPickupAddress] = useState("");
   const [deliveryAddress, setDeliveryAddress] = useState("");
 
@@ -48,15 +49,21 @@ export default function QuickQuotePage() {
 
         // 🔥 SET STATE
         setPickupSuburb({
-          label: q.originArea?.suburb,
+          label: q.originArea?.suburb + ", " + q.originArea?.postcode,
           value: q.suburb_origin,
           area_code: q.suburb_origin,
+          postcode: q.originArea?.postcode,
+          state: q.originArea?.state,
+          zone_type: q.originArea?.zone_type,
         });
 
         setDeliverySuburb({
-          label: q.destinationArea?.suburb,
+          label: q.destinationArea?.suburb + ", " + q.destinationArea?.postcode,
           value: q.suburb_destination,
           area_code: q.suburb_destination,
+          postcode: q.destinationArea?.postcode,
+          state: q.destinationArea?.state,
+          zone_type: q.destinationArea?.zone_type,
         });
 
         setPickupAddress(q.pickup_address || "");
@@ -66,7 +73,14 @@ export default function QuickQuotePage() {
         setReceiverName(q.receiver_name || "");
         setReceiverPhone(q.receiver_phone || "");
 
-        const foundCarrier = carriers.find((c) => c.name === q.carrier);
+        const foundCarrier = {
+          name: q.carrierDetail.carrier_name,
+          pickup_eta: q.eta_pickup,
+          delivery_eta: q.eta_delivery,
+          price: q.price_all_in,
+          carrier_code: q.carrier,
+          rate_id: q.rate_id,
+        };
 
         if (foundCarrier) {
           setSelectedCarrier(foundCarrier);
@@ -77,6 +91,8 @@ export default function QuickQuotePage() {
             pickup_eta: "-",
             delivery_eta: "-",
             price: 0,
+            carrier_code: "-",
+            rate_id: null,
           });
         }
 
@@ -99,8 +115,8 @@ export default function QuickQuotePage() {
     };
 
     loadData();
-    console.log("PARAMS:", params);
-    console.log("CONNOTE:", connoteNo);
+    // console.log("PARAMS:", params);
+    // console.log("CONNOTE:", connoteNo);
   }, [connoteNo, params]);
   // ================= CARGO =================
   const [cargoList, setCargoList] = useState([
@@ -164,31 +180,54 @@ export default function QuickQuotePage() {
   }, 0);
 
   // ================= CARRIER =================
-  const [selectedCarrier, setSelectedCarrier] = useState<any>(null);
 
-  const carriers = [
-    {
-      id: 1,
-      name: "DHL Express",
-      pickup_eta: "1 Days",
-      delivery_eta: "2 Days",
-      price: 120,
-    },
-    {
-      id: 2,
-      name: "FedEx",
-      pickup_eta: "1 Days",
-      delivery_eta: "2 Days",
-      price: 100,
-    },
-  ];
+  // ================= CARRIER =================
+  const [selectedCarrier, setSelectedCarrier] = useState<any>(null);
+  const [selectedRateId, setSelectedRateId] = useState<number | null>(null);
+  const [carriers, setCarriers] = useState<any[]>([]);
+  const [loadingCarrier, setLoadingCarrier] = useState(false);
+
+  const fetchRates = async () => {
+    try {
+      if (!pickupSuburb || !deliverySuburb) return;
+
+      setLoadingCarrier(true);
+
+      const res = await fetch("/api/cargo-quote/calculate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          customer_code: "CUST001", // 🔥 nanti ambil dari session
+          origin_state: pickupSuburb.state,
+          dest_state: deliverySuburb.state,
+          zone_type: deliverySuburb.zone_type,
+          cargos: cargoList.map((c) => ({
+            unit: c.cargoUnit,
+            qty: Number(c.qty),
+          })),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message);
+
+      setCarriers(data);
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setLoadingCarrier(false);
+    }
+  };
 
   // ================= RECEIVER =================
   const [receiverName, setReceiverName] = useState("");
   const [receiverPhone, setReceiverPhone] = useState("");
 
   // ================= VALIDATION =================
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step === 1) {
       if (!pickupSuburb || !deliverySuburb) {
         return toast.error("Please complete location");
@@ -202,6 +241,9 @@ export default function QuickQuotePage() {
           return toast.error("Qty & Weight must fill");
         }
       }
+
+      // 🔥 CALL API DISINI
+      await fetchRates();
     }
 
     if (step === 2 && !selectedCarrier) {
@@ -212,6 +254,15 @@ export default function QuickQuotePage() {
   };
 
   const handleBack = () => setStep(step - 1);
+  const handleBackFirstStep = () => {
+    setSaveQuote(!saveQuote);
+    if (saveQuote) {
+      setStep(1);
+    } else {
+      setStep(step - 1);
+    }
+    console.log(step);
+  };
 
   // ================= Edit & update =================
   const handleEdit = async (status: "Entry" | "Booking") => {
@@ -242,6 +293,9 @@ export default function QuickQuotePage() {
 
         carrier: selectedCarrier?.name,
         price: selectedCarrier?.price,
+        rate_id: selectedCarrier?.rate_id,
+        pickup_eta: selectedCarrier?.pickup_eta,
+        delivery_eta: selectedCarrier?.delivery_eta,
 
         status,
 
@@ -436,164 +490,375 @@ export default function QuickQuotePage() {
 
         {/* ================= STEP 2 ================= */}
         {step === 2 && (
-          <div className="grid md:grid-cols-2 gap-4">
-            {carriers.map((c) => (
-              <div
-                key={c.id}
-                onClick={() => setSelectedCarrier(c)}
-                className={`p-6 rounded-2xl border cursor-pointer ${
-                  selectedCarrier?.id === c.id
-                    ? "border-blue-500 bg-blue-50"
-                    : "bg-white"
-                }`}
-              >
-                <h3 className="font-semibold">{c.name}</h3>
-                <p>Pickup: {c.pickup_eta}</p>
-                <p>Delivery: {c.delivery_eta}</p>
-                <p className="font-bold">${c.price}</p>
+          <div className="flex flex-col gap-4">
+            <div className="flex justify-between items-center px-2 mb-2">
+              <h2 className="text-sm font-bold text-gray-600 uppercase tracking-wider">
+                Available Carriers
+              </h2>
+              <span className="text-xs text-gray-400">
+                Prices include fuel surcharge & PPN
+              </span>
+            </div>
+
+            {loadingCarrier ? (
+              <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-gray-100">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 mb-4"></div>
+                <p className="text-gray-500 font-medium">
+                  Fetching best rates...
+                </p>
               </div>
-            ))}
+            ) : carriers.length === 0 ? (
+              <div className="text-center py-20 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+                <p className="text-gray-400">No rates found for this route.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {carriers.map((c, i) => {
+                  // FIX: Pastikan perbandingannya konsisten dengan state yang diupdate
+                  // const isSelected = selectedRateId === c.rate_id;
+                  const isSelected = selectedCarrier?.rate_id === c.rate_id;
+                  const isCheapest = i === 0;
+
+                  return (
+                    <div
+                      key={i}
+                      // FIX: Update kedua state saat diklik
+                      onClick={() => {
+                        setSelectedCarrier(c);
+                        setSelectedRateId(c.rate_id);
+                      }}
+                      className={`relative overflow-hidden flex flex-col md:flex-row items-center justify-between p-6 rounded-xl border-2 transition-all duration-300 
+                ${
+                  isSelected
+                    ? "border-blue-500 bg-blue-50/50 shadow-lg scale-[1.01]"
+                    : "border-white bg-white hover:border-gray-200 hover:shadow-md"
+                } cursor-pointer`}
+                    >
+                      {/* INDICATOR LINE */}
+                      <div
+                        className={`absolute left-0 top-0 bottom-0 w-1.5 ${isSelected ? "bg-blue-600" : "bg-transparent"}`}
+                      ></div>
+
+                      {/* SECTION 1: LOGO & IDENTITY */}
+                      <div className="flex items-center gap-6 w-full md:w-[30%]">
+                        <div className="space-x-2 w-34 bg-white rounded-lg flex items-center justify-center p-2 shadow-sm border border-gray-50">
+                          <img
+                            src={`/assets/carrier_logo/${c.carrier_code}.webp`}
+                            alt={c.name}
+                            className="object-contain max-h-full w-full"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src =
+                                "/assets/carrier_log/default.webp";
+                            }}
+                          />
+                        </div>
+                        <div className="w-full">
+                          <h3 className="font-black text-gray-900 text-2xl leading-none mb-1 uppercase italic tracking-tighter">
+                            {c.name}
+                          </h3>
+                          <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-bold">
+                            {c.carrier_code}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* SECTION 2: TRANSIT VISUALIZER */}
+                      <div className="flex flex-1 items-center justify-center gap-4 md:gap-10 py-6 md:py-0 w-full">
+                        <div className="text-center">
+                          <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">
+                            Pickup ETA
+                          </p>
+                          <p className="text-sm font-bold text-gray-800">
+                            {c.pickup_eta}
+                          </p>
+                        </div>
+
+                        <div className="flex flex-col items-center min-w-[120px] md:min-w-[150px]">
+                          <div className="flex items-center w-full">
+                            <div className="h-2 w-2 rounded-full bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.5)]"></div>
+                            <div className="h-[2px] flex-1 bg-gradient-to-r from-blue-600 to-gray-300 relative">
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="bg-white px-2 py-0.5 rounded-full border border-gray-100 text-[9px] font-black text-blue-600 uppercase tracking-tighter shadow-sm">
+                                  Transit
+                                </span>
+                              </div>
+                            </div>
+                            <div className="h-2 w-2 rounded-full bg-gray-300"></div>
+                          </div>
+                          <p className="text-[10px] text-gray-400 font-bold mt-2 uppercase tracking-widest">
+                            Express Service
+                          </p>
+                        </div>
+
+                        <div className="text-center">
+                          <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">
+                            Delivery ETA
+                          </p>
+                          <p className="text-sm font-bold text-gray-800">
+                            {c.delivery_eta}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* SECTION 3: PRICING & SELECTION */}
+                      <div className="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end border-t md:border-0 pt-4 md:pt-0">
+                        <div className="text-right flex flex-col justify-center">
+                          {isCheapest && (
+                            <div className="mb-1">
+                              <span className="text-[9px] font-black bg-green-500 text-white px-2 py-0.5 rounded-md uppercase animate-pulse">
+                                Best Rate
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex items-baseline justify-end gap-1">
+                            <span className="text-xl font-bold text-gray-900">
+                              $
+                            </span>
+                            <span className="text-3xl font-black text-gray-900 tracking-tighter">
+                              {Number(c.price).toLocaleString("id-ID")}
+                            </span>
+                          </div>
+                          <p className="text-[10px] font-bold text-blue-600 uppercase tracking-tight">
+                            Price All-in
+                          </p>
+                        </div>
+
+                        <div
+                          className={`flex items-center justify-center h-12 w-12 md:h-14 md:w-32 rounded-xl font-bold text-sm transition-all duration-300 border-2
+                    ${
+                      isSelected
+                        ? "bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200"
+                        : "bg-white border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white"
+                    }`}
+                        >
+                          <span className="hidden md:inline">
+                            {isSelected ? "SELECTED" : "SELECT"}
+                          </span>
+                          <span className="md:hidden">
+                            {isSelected ? "✓" : "+"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 
-        {/* ================= STEP 3 ================= */}
+        {/* STEP 3: FINAL DETAILS */}
         {step === 3 && (
-          <div className="space-y-6 bg-white p-6 rounded-2xl shadow">
-            <h2 className="font-semibold text-lg">Final Details</h2>
+          <div className="space-y-6 bg-white p-8 rounded-2xl shadow-sm border">
+            <h2 className="font-bold text-xl text-gray-800 border-b pb-4">
+              Final Details & Review
+            </h2>
 
-            {/* ================= LOCATION ================= */}
-            <div>
-              <h3 className="font-medium mb-2">Pickup & Delivery</h3>
-
-              <div className="grid md:grid-cols-2 gap-4">
+            {/* LOCATION SECTION */}
+            <section>
+              <h3 className="font-semibold text-blue-600 mb-4 flex items-center gap-2">
+                <span className="w-2 h-2 bg-blue-600 rounded-full"></span>{" "}
+                Pickup & Delivery
+              </h3>
+              <div className="grid md:grid-cols-2 gap-6">
                 <SelectSearch
                   label="Sending Suburb *"
                   value={pickupSuburb}
                   onChange={setPickupSuburb}
                 />
-
                 <SelectSearch
                   label="Receiver Suburb *"
                   value={deliverySuburb}
                   onChange={setDeliverySuburb}
                 />
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4 mt-4">
                 <TextareaField
-                  name="pickupAddress" // ✅ TAMBAH
+                  name="pickupAddress"
                   label="Pickup Address *"
                   value={pickupAddress}
                   onChange={(e) => setPickupAddress(e.target.value)}
+                  placeholder="Full street address for pickup..."
                 />
-
                 <TextareaField
-                  name="deliveryAddress" // ✅ TAMBAH
+                  name="receiverAddress"
                   label="Receiver Address *"
                   value={deliveryAddress}
                   onChange={(e) => setDeliveryAddress(e.target.value)}
+                  placeholder="Full street address for delivery..."
                 />
               </div>
-            </div>
+            </section>
 
-            {/* ================= CARGO ================= */}
-            <div>
-              <h3 className="font-medium mb-2">Cargo Details</h3>
-
+            {/* CARGO REVIEW */}
+            <section>
+              <h3 className="font-semibold text-blue-600 mb-4 flex items-center gap-2">
+                <span className="w-2 h-2 bg-blue-600 rounded-full"></span> Cargo
+                Details (Read-only)
+              </h3>
               {cargoList.map((cargo, index) => (
                 <div
                   key={index}
-                  className="grid md:grid-cols-7 gap-4 mb-4 border p-4 rounded-xl bg-gray-50"
+                  className="grid md:grid-cols-7 gap-3 mb-3 border p-3 rounded-xl bg-gray-50/50"
                 >
                   <div className="grid grid-cols-2 gap-2 md:col-span-3">
                     <InputField
-                      label="Temperature *"
-                      name="cargoTemp" // ✅ TAMBAH
+                      label="Temp"
                       value={cargo.cargoTemp}
                       disabled
+                      name="temperature"
                     />
                     <InputField
-                      label="Unit *"
-                      name="cargoUnit" // ✅ TAMBAH
+                      label="Unit"
                       value={cargo.cargoUnit}
                       disabled
+                      name="unit"
                     />
                   </div>
-
                   <div className="grid grid-cols-2 gap-2 md:col-span-2">
                     <InputField
-                      label="Qty*"
-                      name="qty"
+                      label="Qty"
                       value={cargo.qty}
                       disabled
+                      name="qty"
                     />
                     <InputField
-                      label="Weight (kg)*"
-                      name="weight"
+                      label="Weight"
                       value={cargo.weight}
                       disabled
+                      name="weight"
                     />
                   </div>
-
                   <div className="grid grid-cols-3 gap-2 md:col-span-2">
                     <InputField
-                      label="Length (cm)*"
-                      name="length"
+                      label="L"
                       value={cargo.length}
                       disabled
+                      name="length"
                     />
                     <InputField
-                      label="Width (cm)*"
-                      name="width"
+                      label="W"
                       value={cargo.width}
                       disabled
+                      name="width"
                     />
                     <InputField
-                      label="Height (cm)*"
-                      name="height"
+                      label="H"
                       value={cargo.height}
                       disabled
+                      name="height"
                     />
                   </div>
                 </div>
               ))}
-            </div>
 
-            {/* ================= SUMMARY ================= */}
-            <div className="bg-blue-50 p-4 rounded-xl">
-              <h3 className="font-semibold mb-2">Summary</h3>
-              <p>
-                Total Qty: <b>{totalQty}</b>
-              </p>
-              <p>
-                Total Weight: <b>{totalWeight} kg</b>
-              </p>
-              <p>
-                Total CBM: <b>{totalCBM.toFixed(3)} m³</b>
-              </p>
-            </div>
+              <div className="bg-blue-50/50 p-4 rounded-xl flex flex-wrap gap-8 border border-blue-100 mt-4">
+                <div>
+                  <p className="text-[10px] uppercase text-gray-500 font-bold">
+                    Total Qty
+                  </p>
+                  <p className="font-bold">{totalQty} Units</p>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase text-gray-500 font-bold">
+                    Total Weight
+                  </p>
+                  <p className="font-bold">{totalWeight} kg</p>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase text-gray-500 font-bold">
+                    Volume (CBM)
+                  </p>
+                  <p className="font-bold">{totalCBM.toFixed(3)} m³</p>
+                </div>
+              </div>
+            </section>
 
-            {/* ================= CARRIER ================= */}
-            <div className="bg-gray-100 p-4 rounded-xl">
-              <h3 className="font-semibold mb-2">Selected Carrier</h3>
-              <p className="font-medium">{selectedCarrier?.name}</p>
-              <p className="text-sm">Pickup: {selectedCarrier?.pickup_eta}</p>
-              <p className="text-sm">
-                Delivery: {selectedCarrier?.delivery_eta}
-              </p>
-              <p className="text-blue-600 font-bold text-lg mt-2">
-                ${selectedCarrier?.price}
-              </p>
-            </div>
+            {/* PREMIUM CARRIER CARD */}
+            <section>
+              <h3 className="font-semibold text-blue-600 mb-4 flex items-center gap-2">
+                <span className="w-2 h-2 bg-blue-600 rounded-full"></span>{" "}
+                Selected Carrier
+              </h3>
+              <div className="bg-white border-2 border-blue-500 rounded-2xl overflow-hidden shadow-md">
+                <div className="bg-blue-500 px-4 py-1">
+                  <span className="text-[10px] font-black text-white uppercase tracking-widest">
+                    Confirmed Option
+                  </span>
+                </div>
+                <div className="p-5 flex flex-col md:flex-row items-center justify-between gap-6">
+                  <div className="flex items-center gap-4 w-full md:w-[30%]">
+                    <div className="w-20 h-20 bg-gray-50 rounded-xl flex items-center justify-center p-2 border border-gray-100 shadow-sm">
+                      <img
+                        src={`/assets/carrier_logo/${selectedCarrier?.carrier_code || "default"}.webp`}
+                        alt={selectedCarrier?.name}
+                        className="object-contain w-full h-full"
+                        onError={(e) =>
+                          (e.currentTarget.src =
+                            "/assets/carrier_logo/default.webp")
+                        }
+                      />
+                    </div>
+                    <div>
+                      <h3 className="font-black text-gray-900 text-xl leading-tight uppercase italic tracking-tighter">
+                        {selectedCarrier?.name}
+                      </h3>
+                      <span className="text-[10px] bg-gray-900 text-white px-2 py-0.5 rounded font-bold uppercase">
+                        {selectedCarrier?.carrier_code}
+                      </span>
+                    </div>
+                  </div>
 
-            {/* ================= RECEIVER ================= */}
-            <div>
-              <h3 className="font-medium mb-2">Pickup & Receiver Info</h3>
+                  <div className="flex flex-1 items-center justify-center gap-6 w-full max-w-md px-10">
+                    <div className="text-center">
+                      <p className="text-[8px] font-black text-gray-400 uppercase">
+                        Pickup
+                      </p>
+                      <p className="text-xs font-bold text-gray-800">
+                        {selectedCarrier?.pickup_eta} days
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-center flex-1">
+                      <div className="flex items-center w-full">
+                        <div className="h-2 w-2 rounded-full bg-blue-600"></div>
+                        <div className="h-[2px] flex-1 bg-gradient-to-r from-blue-600 to-gray-200 mx-1"></div>
+                        <div className="h-2 w-2 rounded-full bg-gray-200"></div>
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-[8px] font-black text-gray-400 uppercase">
+                        Arrival
+                      </p>
+                      <p className="text-xs font-bold text-gray-800">
+                        {selectedCarrier?.delivery_eta} days
+                      </p>
+                    </div>
+                  </div>
 
+                  <div className="text-right w-full md:w-auto border-t md:border-0 pt-4 md:pt-0">
+                    <div className="flex items-baseline justify-end">
+                      <span className="text-sm font-bold text-gray-400 mr-1">
+                        $
+                      </span>
+                      <span className="text-3xl font-black text-gray-900 tracking-tighter">
+                        {Number(selectedCarrier?.price).toLocaleString("id-ID")}
+                      </span>
+                    </div>
+                    <p className="text-[9px] font-bold text-blue-600 uppercase">
+                      Total All-in Price
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* RECEIVER INFO */}
+            <section className="bg-gray-50 p-6 rounded-2xl border border-dashed border-gray-300">
+              <h3 className="font-semibold text-gray-700 mb-4 uppercase text-xs tracking-widest">
+                Receiver & Scheduling
+              </h3>
               <div className="grid md:grid-cols-3 gap-4">
                 <InputField
-                  type="date"
                   name="pickupDate"
+                  type="date"
                   label="Pickup Date *"
                   value={pickupDate}
                   onChange={(e) => setPickupDate(e.target.value)}
@@ -603,16 +868,17 @@ export default function QuickQuotePage() {
                   label="Receiver Name *"
                   value={receiverName}
                   onChange={(e) => setReceiverName(e.target.value)}
+                  placeholder="Full Name"
                 />
-
                 <InputField
-                  name="receiverPhone"
                   label="Receiver Phone *"
+                  name="pickupPhone"
                   value={receiverPhone}
                   onChange={(e) => setReceiverPhone(e.target.value)}
+                  placeholder="+61..."
                 />
               </div>
-            </div>
+            </section>
           </div>
         )}
 
@@ -656,7 +922,7 @@ export default function QuickQuotePage() {
             <div className="flex justify-between items-center">
               {/* LEFT */}
               <Button
-                onClick={handleBack}
+                onClick={handleBackFirstStep}
                 className="bg-white border border-gray-300 text-gray-700 px-6 py-2 rounded-lg"
                 variant="secondary"
               >

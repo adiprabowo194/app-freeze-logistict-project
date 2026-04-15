@@ -5,7 +5,12 @@ import { getSessionUser } from "@/lib/auth";
 
 // 🔥 load relation
 import "@/models";
-import { Quotes as Booking, CoverageAreas, PackageDetails } from "@/models";
+import {
+  Quotes as Booking,
+  CoverageAreas,
+  PackageDetails,
+  Carriers,
+} from "@/models";
 
 export async function GET(req: Request) {
   try {
@@ -124,6 +129,12 @@ export async function GET(req: Request) {
           model: CoverageAreas,
           as: "originArea",
           attributes: ["suburb", "state"],
+          required: false,
+        },
+        {
+          model: Carriers,
+          as: "carrierDetail",
+          attributes: ["carrier_name", "carrier_code"],
           required: false,
         },
         {

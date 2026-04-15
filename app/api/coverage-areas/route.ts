@@ -18,12 +18,15 @@ export async function GET(req: Request) {
       ], // ✅ harus ada area_code
       where: search
         ? {
-            suburb: {
-              [Op.like]: `%${search}%`,
-            },
+            [Op.or]: [
+              { suburb: { [Op.like]: `%${search}%` } },
+              { state: { [Op.like]: `%${search}%` } },
+              { postcode: { [Op.like]: `%${search}%` } },
+            ],
           }
         : undefined,
       limit: 20,
+      raw: true,
     });
 
     return NextResponse.json(data);
