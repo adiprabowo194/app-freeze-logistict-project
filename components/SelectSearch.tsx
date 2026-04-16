@@ -8,7 +8,7 @@ const AsyncSelect = dynamic(() => import("react-select/async"), {
 
 type OptionType = {
   label: string;
-  value: string;
+  value: string | null;
   area_code: string;
   postcode: string;
   zone_type: string;
