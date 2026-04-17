@@ -11,6 +11,8 @@ type OptionType = {
   label: string;
   value: string;
   area_code: string;
+  postcode: string; // Tambahkan ini
+  zone_type: string; // Tambahkan ini
 };
 
 interface Address {
@@ -76,6 +78,8 @@ export default function ProfileSettingsPage() {
                   label: data.pickupArea.suburb,
                   value: data.pickupArea.suburb,
                   area_code: data.pickupArea.area_code,
+                  postcode: data.pickupArea.postcode, // Tambahkan ini
+                  zone_type: data.pickupArea.zone_type, // Tambahkan ini
                 }
               : null,
             address: data.pickup_address ?? "",
@@ -87,6 +91,8 @@ export default function ProfileSettingsPage() {
                   label: data.officeArea.suburb,
                   value: data.officeArea.suburb,
                   area_code: data.officeArea.area_code,
+                  postcode: data.officeArea.postcode, // Tambahkan ini
+                  zone_type: data.officeArea.zone_type, // Tambahkan ini
                 }
               : null,
             address: data.office_address ?? "",
@@ -250,7 +256,7 @@ export default function ProfileSettingsPage() {
               <div key={addr.id} className="border p-4 rounded-xl">
                 <SelectSearch
                   label={addr.id === 1 ? "Pickup Area *" : "Office Area *"}
-                  value={addr.area}
+                  value={addr.area || undefined}
                   onChange={(val) => handleAddressChange(addr.id, "area", val)}
                 />
 

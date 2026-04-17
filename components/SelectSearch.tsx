@@ -8,14 +8,18 @@ const AsyncSelect = dynamic(() => import("react-select/async"), {
 
 type OptionType = {
   label: string;
-  value: string;
+  value: string | null;
   area_code: string;
+  postcode: string;
+  zone_type: string;
 };
 
 type ApiItem = {
   suburb: string;
   state: string;
   area_code: string;
+  postcode: string;
+  zone_type: string;
 };
 
 type Props = {
@@ -35,9 +39,12 @@ export default function SelectSearch({ label, error, value, onChange }: Props) {
       const data: ApiItem[] = await res.json();
 
       return data.map((item) => ({
-        label: `${item.suburb}`,
+        label: `${item.suburb}, ${item.postcode}`,
         value: item.suburb,
         area_code: item.area_code,
+        postcode: item.postcode,
+        zone_type: item.zone_type,
+        state: item.state,
       }));
     } catch (err) {
       console.error("Failed load suburb:", err);

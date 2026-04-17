@@ -3,15 +3,19 @@ import { Op } from "sequelize";
 import { connectDB } from "@/lib/sequelize";
 import { getSessionUser } from "@/lib/auth";
 
-// 🔥 WAJIB: load relation
+// 🔥 load relation
 import "@/models";
-import { Quotes as Booking, CoverageAreas } from "@/models";
+import {
+  Quotes as Booking,
+  CoverageAreas,
+  PackageDetails,
+  Carriers,
+} from "@/models";
 
 export async function GET(req: Request) {
   try {
     await connectDB();
 
-    // cek session
     // ================= SESSION =================
     const user = await getSessionUser();
 
@@ -20,7 +24,6 @@ export async function GET(req: Request) {
     }
 
     const customerCode = user.customer_code;
-    const username = user.username;
 
     if (!customerCode) {
       return NextResponse.json(
@@ -41,20 +44,52 @@ export async function GET(req: Request) {
     const endDate = searchParams.get("endDate");
 
     const where: any = {
-      customer_code: customerCode, // 🔥 WAJIB FILTER
+      customer_code: customerCode,
+      is_active: 1,
     };
 
-    // 🔍 SEARCH
+    // 🔍 SEARCH (FIX JOIN RELATION)
     if (search) {
       where[Op.or] = [
         { connote_no: { [Op.like]: `%${search}%` } },
-        { suburb_origin: { [Op.like]: `%${search}%` } },
-        { suburb_destination: { [Op.like]: `%${search}%` } },
+
+        // 🔥 JOIN originArea
+        { "$originArea.suburb$": { [Op.like]: `%${search}%` } },
+
+        // 🔥 JOIN destinationArea
+        { "$destinationArea.suburb$": { [Op.like]: `%${search}%` } },
       ];
     }
 
-    // 📌 STATUS (FIX ONPROCESS)
-    if (status) {
+    // 📌 STATUS
+    // if (status) {
+    //   if (status === "onprocess") {
+    //     where.status = {
+    //       [Op.in]: ["booking", "transit", "approve"],
+    //     };
+    //   } else if (status === "confirm") {
+    //     where.status = {
+    //       [Op.in]: ["approve"],
+    //     };
+    //   } else if (status === "transit") {
+    //     where.status = {
+    //       [Op.in]: ["transit"],
+    //     };
+    //   } else if (status === "booking") {
+    //     where.status = {
+    //       [Op.in]: ["booking"],
+    //     };
+    //   } else {
+    //     where.status = status;
+    //   }
+    // }
+    // 📌 STATUS PRIORITY: multi > single
+    const statusList = searchParams.get("statusList");
+    if (statusList && !status) {
+      where.status = {
+        [Op.in]: statusList.split(","),
+      };
+    } else if (status) {
       if (status === "onprocess") {
         where.status = {
           [Op.in]: ["booking", "transit", "approve"],
@@ -75,17 +110,14 @@ export async function GET(req: Request) {
         where.status = status;
       }
     }
-
-    // 📅 DATE (FIX TIMEZONE SAFE)
+    // 📅 DATE
     if (startDate && endDate) {
       where.createdAt = {
         [Op.between]: [new Date(startDate), new Date(endDate + "T23:59:59")],
       };
     }
 
-    console.log("WHERE:", where);
-
-    // 🔥 QUERY
+    // ================= QUERY =================
     const result = await Booking.findAndCountAll({
       where,
       limit,
@@ -100,20 +132,63 @@ export async function GET(req: Request) {
           required: false,
         },
         {
+          model: Carriers,
+          as: "carrierDetail",
+          attributes: ["carrier_name", "carrier_code"],
+          required: false,
+        },
+        {
           model: CoverageAreas,
           as: "destinationArea",
           attributes: ["suburb", "state"],
           required: false,
         },
+        {
+          model: PackageDetails,
+          as: "packageDetails",
+          attributes: [
+            "temperature",
+            "unit",
+            "qty",
+            "weight",
+            "length",
+            "width",
+            "height",
+          ],
+          required: false,
+
+          // 🔥 ambil 1 saja untuk default dropdown
+          separate: true,
+          limit: 1,
+          order: [["createdAt", "DESC"]],
+        },
       ],
-      raw: false, // 🔥 penting
-      nest: true, // 🔥 penting
+
+      raw: false,
+      nest: true,
     });
 
-    console.log("ROWS:", result.rows.length);
+    // ================= FORMAT =================
+    const rows = result.rows.map((item: any) => {
+      const data = item.toJSON();
+      const firstDetail = data.packageDetails?.[0] || null;
 
+      return {
+        ...data,
+
+        // 🔥 default select value
+        temperature: firstDetail?.temperature || null,
+        unit: firstDetail?.unit || null,
+
+        // optional
+        qty: firstDetail?.qty || null,
+        weight: firstDetail?.weight || null,
+      };
+    });
+
+    // ================= RESPONSE =================
     return NextResponse.json({
-      data: result.rows,
+      data: rows,
       total: result.count,
       page,
       totalPages: Math.ceil(result.count / limit),
@@ -124,7 +199,7 @@ export async function GET(req: Request) {
     return NextResponse.json(
       {
         error: error.message,
-        stack: error.stack, // 🔥 biar kelihatan jelass
+        stack: error.stack,
       },
       { status: 500 },
     );

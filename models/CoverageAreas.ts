@@ -11,15 +11,15 @@ const CoverageAreas = sequelize.define(
     },
     area_code: DataTypes.STRING(50),
     suburb: DataTypes.STRING(50),
-    postcode: DataTypes.INTEGER,
+    postcode: DataTypes.STRING(50),
     state: DataTypes.STRING(50),
-    state_code: DataTypes.STRING(5),
+    zone_type: DataTypes.STRING(50),
   },
   {
     tableName: "coverage_areas",
     timestamps: false,
     freezeTableName: true,
-  }
+  },
 );
 
 export default CoverageAreas;

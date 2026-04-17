@@ -11,25 +11,25 @@ import useDebounce from "@/hooks/useDebounce";
 import Link from "next/link";
 import Pagination from "@/components/Pagination";
 // 📦 TYPE (pakai JOIN)
-interface Booking {
+interface Quote {
   id: number;
-  unit?: string; // bisa undefined
   connote_no: string;
-  cargo_type: string;
-  weight: number;
-  qty: number;
   status: string;
   createdAt: string;
 
+  temperature?: string;
+  unit?: string;
+  qty?: number;
+  weight?: number;
+
   originArea?: {
-    suburb?: string; // bisa undefined
+    suburb?: string;
   };
 
   destinationArea?: {
-    suburb?: string; // bisa undefined
+    suburb?: string;
   };
 }
-
 export default function QuotesPage() {
   // 🔹 STATE
   const [search, setSearch] = useState("");
@@ -37,7 +37,13 @@ export default function QuotesPage() {
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState("");
   const debouncedSearch = useDebounce(search);
-
+  const [statusList, setStatusList] = useState<string[]>([
+    "Booking",
+    "Delivered",
+    "Pickup",
+    "Delivery",
+    "Confirm",
+  ]);
   // 🔥 FETCH TABLE
 
   // 🔥 TABLE DATA
@@ -46,11 +52,13 @@ export default function QuotesPage() {
     limit,
     search: debouncedSearch,
     status,
+    statusList,
   });
 
   // 🔥 FETCH SUMMARY
   const { active, delivered, onprocess } = useSummary({
     search: debouncedSearch,
+    statusList,
   });
 
   return (
@@ -109,57 +117,55 @@ export default function QuotesPage() {
             ) : data.length === 0 ? (
               <p className="text-gray-400 text-sm">No data found</p>
             ) : (
-              data.map((item: Booking) => (
+              data.map((item: Quote) => (
                 <div
                   key={item.id}
                   className="bg-white rounded-2xl border p-5 flex justify-between items-start"
                 >
                   {/* LEFT */}
-                  <div className="space-y-3">
-                    <div>
-                      <p className="font-semibold">{item.connote_no}</p>
-                      <p className="text-sm text-gray-500">
-                        {new Date(item.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
+                  <div className="space-y-2">
+                    <p className="font-semibold">{item.connote_no || "-"}</p>
+                    <p className="text-sm text-gray-500">
+                      {item.createdAt
+                        ? new Date(item.createdAt).toLocaleDateString()
+                        : "-"}
+                    </p>
 
-                    <div className="text-sm">
-                      <p>
-                        📍 {item.originArea?.suburb || "-"} →{" "}
-                        {item.destinationArea?.suburb || "-"}
-                      </p>
-                    </div>
+                    <p className="text-sm">
+                      📍 {item.originArea?.suburb || "-"} →{" "}
+                      {item.destinationArea?.suburb || "-"}
+                    </p>
                   </div>
 
                   {/* MIDDLE */}
                   <div className="space-y-2 text-sm">
-                    <p>Temperature: {item.temperature}</p>
+                    <p>Temperature: {item.temperature || "-"}</p>
                     <p>
                       Unit:{" "}
-                      <span className="text-blue-400 bg-blue-100 px-2 py-1 rounded-xl ">
-                        {" "}
+                      <span className="text-blue-400 bg-blue-100 px-2 py-1 rounded-xl">
                         {item.unit || "-"}
                       </span>
                     </p>
                   </div>
+
                   {/* MIDDLE */}
-                  <div className="space-y-2 text-sm">
-                    <p>📦 {item.weight} kg</p>
-                    <p>Qty: {item.qty}</p>
+                  <div className="text-sm space-y-1">
+                    <p>📦 {item.weight || 0} kg</p>
+                    <p>Qty: {item.qty || 0}</p>
                   </div>
 
                   {/* RIGHT */}
-                  <div className="flex flex-col items-end gap-3">
+                  <div className="flex flex-col items-end gap-2">
                     <span
                       className={`px-3 py-1 rounded-full text-xs ${
-                        item.status === "Delivered"
+                        item.status === "delivered"
                           ? "bg-green-100 text-green-600"
-                          : item.status === "Booking"
+                          : item.status === "transit"
                             ? "bg-blue-100 text-blue-600"
                             : "bg-yellow-100 text-yellow-600"
                       }`}
                     >
-                      {item.status}
+                      {item.status || "-"}
                     </span>
 
                     <div className="flex flex-col gap-2 text-center">

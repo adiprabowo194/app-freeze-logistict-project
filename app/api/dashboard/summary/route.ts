@@ -40,13 +40,22 @@ export async function GET(req: Request) {
     if (search) {
       where[Op.or] = [
         { connote_no: { [Op.like]: `%${search}%` } },
-        { suburb_origin: { [Op.like]: `%${search}%` } },
-        { suburb_destination: { [Op.like]: `%${search}%` } },
+
+        // 🔥 JOIN originArea
+        { "$originArea.suburb$": { [Op.like]: `%${search}%` } },
+
+        // 🔥 JOIN destinationArea
+        { "$destinationArea.suburb$": { [Op.like]: `%${search}%` } },
       ];
     }
 
     // 📌 STATUS
-    if (status) {
+    const statusList = searchParams.get("statusList");
+    if (statusList && !status) {
+      where.status = {
+        [Op.in]: statusList.split(","),
+      };
+    } else if (status) {
       if (status === "onprocess") {
         where.status = {
           [Op.in]: ["booking", "transit", "approve"],
@@ -79,7 +88,12 @@ export async function GET(req: Request) {
     }
 
     // 🔥 SUMMARY (pakai where yg sama)
-    const total = await Quotes.count({ where });
+    const total = await Quotes.count({
+      where: {
+        ...where,
+        status: "booking",
+      },
+    });
 
     const delivered = await Quotes.count({
       where: {

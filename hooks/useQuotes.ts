@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 interface Quote {
   id: number;
   connote_no: string;
-  temperature: string;
+  cbm: string;
   originArea?: {
     suburb?: string;
   };
@@ -15,8 +15,8 @@ interface Quote {
   };
   suburb_origin: string;
   suburb_destination: string;
-  qty: number;
-  weight: number;
+  total_qty: number;
+  total_weight: number;
   status: string;
   customer_code: string;
   user_inp: string;
@@ -40,6 +40,7 @@ interface Params {
   order?: "ASC" | "DESC";
   startDate?: string;
   endDate?: string;
+  statusList?: string[]; // 🔥 NEW
 }
 
 export default function useQuotes(params: Params) {
@@ -53,8 +54,17 @@ export default function useQuotes(params: Params) {
   const [loading, setLoading] = useState(false);
 
   // 🔹 destructure biar dependency lebih clean
-  const { page, limit, search, status, sortBy, order, startDate, endDate } =
-    params;
+  const {
+    page,
+    limit,
+    search,
+    status,
+    sortBy,
+    order,
+    startDate,
+    endDate,
+    statusList,
+  } = params;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -81,7 +91,10 @@ export default function useQuotes(params: Params) {
             query.append(key, String(value));
           }
         });
-
+        // 🔥 append multi status (dipisah biar clean)
+        if (statusList && statusList.length > 0) {
+          query.append("statusList", statusList.join(","));
+        }
         const res = await fetch(`/api/quotes?${query.toString()}`, {
           signal: controller.signal,
         });
@@ -104,7 +117,17 @@ export default function useQuotes(params: Params) {
 
     // 🔥 cleanup (hindari memory leak)
     return () => controller.abort();
-  }, [page, limit, search, status, sortBy, order, startDate, endDate]);
+  }, [
+    page,
+    limit,
+    search,
+    status,
+    sortBy,
+    order,
+    startDate,
+    endDate,
+    JSON.stringify(statusList),
+  ]);
 
   return { ...data, loading };
 }

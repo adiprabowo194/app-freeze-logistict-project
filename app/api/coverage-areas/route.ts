@@ -8,23 +8,30 @@ export async function GET(req: Request) {
     const search = searchParams.get("search");
 
     const data = await CoverageAreas.findAll({
-      attributes: ["id", "suburb", "state", "area_code"], // ✅ harus ada area_code
+      attributes: [
+        "id",
+        "suburb",
+        "state",
+        "area_code",
+        "postcode",
+        "zone_type",
+      ], // ✅ harus ada area_code
       where: search
         ? {
-            suburb: {
-              [Op.like]: `%${search}%`,
-            },
+            [Op.or]: [
+              { suburb: { [Op.like]: `%${search}%` } },
+              { state: { [Op.like]: `%${search}%` } },
+              { postcode: { [Op.like]: `%${search}%` } },
+            ],
           }
         : undefined,
       limit: 20,
+      raw: true,
     });
 
     return NextResponse.json(data);
   } catch (error: any) {
     console.error(error);
-    return NextResponse.json(
-      { error: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

@@ -27,7 +27,7 @@ function MenuBars() {
       icon: "ri-file-list-2-line",
       children: [
         { name: "Quick Quote", href: "/quote/quick-quote" },
-        { name: "Saved Quotes", href: "/quotes/entry" },
+        { name: "Saved Quote", href: "/quote/save-quote" },
       ],
     },
     {
