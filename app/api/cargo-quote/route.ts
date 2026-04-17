@@ -42,7 +42,8 @@ export async function POST(req: NextRequest) {
       pickupDate,
       delivery_eta,
       pickup_eta,
-      price,
+      price_all_in,
+      carrier_price,
       rate_id,
     } = body;
 
@@ -75,7 +76,8 @@ export async function POST(req: NextRequest) {
         pickup_date: pickupDate,
         eta_pickup: pickup_eta,
         eta_delivery: delivery_eta,
-        price_all_in: price,
+        price_all_in,
+        carrier_price,
         rate_id: rate_id,
         customer_code: customerCode,
         user_inp: user.username,

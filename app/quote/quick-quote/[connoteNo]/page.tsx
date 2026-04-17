@@ -199,7 +199,7 @@ export default function QuickQuotePage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          customer_code: "CUST001", // 🔥 nanti ambil dari session
+          // customer_code: "CUST001", // 🔥 nanti ambil dari session
           origin_state: pickupSuburb.state,
           dest_state: deliverySuburb.state,
           zone_type: deliverySuburb.zone_type,
@@ -285,17 +285,21 @@ export default function QuickQuotePage() {
         suburb_origin: pickupSuburb?.area_code,
         suburb_destination: deliverySuburb?.area_code,
         pickup_address: pickupAddress,
-        pickup_date: pickupDate,
+        pickupDate: pickupDate, // ✅ pastikan ada state nya
         delivery_address: deliveryAddress,
 
         receiver_name: receiverName,
         receiver_phone: receiverPhone,
 
-        carrier: selectedCarrier?.name,
-        price: selectedCarrier?.price,
+        carrier: selectedCarrier?.carrier_code,
+        price_all_in: selectedCarrier?.price,
+        carrier_price:
+          selectedCarrier?.breakdown?.[0].first_unit_price +
+          selectedCarrier?.breakdown?.[0].next_unit_price,
         rate_id: selectedCarrier?.rate_id,
-        pickup_eta: selectedCarrier?.pickup_eta,
+
         delivery_eta: selectedCarrier?.delivery_eta,
+        pickup_eta: selectedCarrier?.pickup_eta,
 
         status,
 
@@ -313,6 +317,7 @@ export default function QuickQuotePage() {
         total_weight: totalWeight,
         total_cbm: totalCBM,
       };
+      console.log([payload, selectedCarrier]);
 
       const res = await fetch(`/api/quotes/${connoteNo}`, {
         method: "PUT", // 🔥 UPDATE

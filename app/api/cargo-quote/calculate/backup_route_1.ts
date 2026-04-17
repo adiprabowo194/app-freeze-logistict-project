@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     const requestedUnits = Object.keys(groupedInput);
     if (requestedUnits.length === 0) return NextResponse.json([]);
 
-    // 2. Ambil semua rates yang cocok
+    // 2. Ambil semua rates yang cocok dengan rute dan customer
     const allRates = await ShippingRates.findAll({
       where: {
         customer_code: customerCode,
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
           model: Carriers,
           as: "carrier_details",
           where: { is_active: 1 },
-          required: true,
+          required: true, // Pastikan carrier ada dan aktif
         },
       ],
     });
@@ -64,9 +64,9 @@ export async function POST(req: NextRequest) {
       let totalExclTax = 0;
       let totalTaxAmount = 0;
       let breakdownDetails = [];
-      let rateIdDetails = [];
       let canHandleAllRequestedUnits = true;
 
+      // Cek apakah carrier ini punya rate untuk semua unit yang di-request user
       for (const unitType of requestedUnits) {
         const qty = groupedInput[unitType];
         const matchRate = carrierRates.find(
@@ -78,70 +78,42 @@ export async function POST(req: NextRequest) {
           break;
         }
 
-        rateIdDetails.push({
-          rate_id: matchRate.id,
-          unit: unitType,
-          qty: qty,
-        });
-
+        // --- RUMUS ANDA ---
         const fuelPct = Number(matchRate.margin_fuel_levy ?? 0) / 100;
         const marginPct = Number(matchRate.margin_percent ?? 0) / 100;
-        const basePrice = Number(matchRate.carrier_price ?? 0);
         const taxPct = Number(matchRate.tax_percent ?? 0) / 100;
+        const basePrice = Number(matchRate.carrier_price ?? 0);
+        const nextPrice = Number(matchRate.next_price_carrier ?? 0);
+
+        const firstUnitPriceMatured =
+          basePrice * (1 + fuelPct) * (1 + marginPct);
+        const nextUnitPriceMatured =
+          nextPrice * (1 + fuelPct) + (1 + marginPct);
 
         let unitExclTax = 0;
-        let firstUnitPrice = 0;
-        let nextUnitPrice = 0;
-
-        // ============================================================
-        // CHECK LOGIKA BOX & PALLET
-        // ============================================================
-        if (unitType === "pallet") {
-          // Pallet: Rate = Base * (1 + Margin)
-          firstUnitPrice = basePrice * (1 + marginPct);
-
-          if (qty > 1) {
-            // Next price Pallet (Bensin): Rate * Fuel%
-            nextUnitPrice = firstUnitPrice * fuelPct;
-            unitExclTax = firstUnitPrice + (qty - 1) * nextUnitPrice;
-          } else {
-            nextUnitPrice = 0;
-            unitExclTax = firstUnitPrice;
-          }
+        if (qty === 1) {
+          unitExclTax = firstUnitPriceMatured;
         } else {
-          // Box: Sesuai Rumus Campuran Anda
-          const nextPriceBase = Number(matchRate.next_price_carrier ?? 0);
-
-          // First Unit: (19 * 1.55) * 1.05 = 30.92
-          firstUnitPrice = basePrice * (1 + fuelPct) * (1 + marginPct);
-
-          if (qty > 1) {
-            // Next Unit: (6 * 1.55) + (1 + 0.05) = 10.35
-            nextUnitPrice = nextPriceBase * (1 + fuelPct) + (1 + marginPct);
-            unitExclTax = firstUnitPrice + (qty - 1) * nextUnitPrice;
-          } else {
-            nextUnitPrice = 0;
-            unitExclTax = firstUnitPrice;
-          }
+          unitExclTax =
+            firstUnitPriceMatured + (qty - 1) * nextUnitPriceMatured;
         }
 
         const unitTax = unitExclTax * taxPct;
+
         totalExclTax += unitExclTax;
         totalTaxAmount += unitTax;
 
         breakdownDetails.push({
           cargoUnit: unitType,
           qty_total: qty,
-          first_unit_price: parseFloat(firstUnitPrice.toFixed(2)),
-          next_unit_price: parseFloat(nextUnitPrice.toFixed(2)),
           subtotal_excl_tax: parseFloat(unitExclTax.toFixed(2)),
           tax_amount: parseFloat(unitTax.toFixed(2)),
         });
       }
 
+      // Jika carrier support semua item, masukkan ke hasil final
       if (canHandleAllRequestedUnits) {
         finalResults.push({
-          rate_id: JSON.stringify(rateIdDetails),
           carrier_code: carrierInfo.carrier_code || "N/A",
           name: carrierInfo.carrier_name || "Unknown",
           price: parseFloat((totalExclTax + totalTaxAmount).toFixed(2)),
@@ -155,6 +127,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Urutkan termurah
     finalResults.sort((a, b) => a.price - b.price);
 
     return NextResponse.json(finalResults);

@@ -26,12 +26,22 @@ export default function QuickQuotePage() {
     height: string;
   };
 
+  type CarrierRate = {
+    rate_id: number;
+    carrier_code: string;
+    name: string;
+    price: number;
+    pickup_eta: string;
+    delivery_eta: string;
+  };
+
   // ================= LOCATION =================
   const [pickupSuburb, setPickupSuburb] = useState<any>(null);
   const [deliverySuburb, setDeliverySuburb] = useState<any>(null);
   const [pickupDate, setPickupDate] = useState("");
   const [pickupAddress, setPickupAddress] = useState("");
   const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [cargos, setCargos] = useState([]);
 
   // ================= AUTO LOAD CUSTOMER =================
   useEffect(() => {
@@ -141,7 +151,7 @@ export default function QuickQuotePage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          customer_code: "CUST001", // 🔥 nanti ambil dari session
+          // customer_code: "CUST001", // 🔥 nanti ambil dari session
           origin_state: pickupSuburb.state,
           dest_state: deliverySuburb.state,
           zone_type: deliverySuburb.zone_type,
@@ -225,8 +235,11 @@ export default function QuickQuotePage() {
         receiver_name: receiverName,
         receiver_phone: receiverPhone,
 
-        carrier: selectedCarrier?.name,
-        price: selectedCarrier?.price,
+        carrier: selectedCarrier?.carrier_code,
+        price_all_in: selectedCarrier?.price,
+        carrier_price:
+          selectedCarrier?.breakdown?.[0].first_unit_price +
+          selectedCarrier?.breakdown?.[0].next_unit_price,
         rate_id: selectedCarrier?.rate_id,
 
         delivery_eta: selectedCarrier?.delivery_eta,
@@ -248,7 +261,7 @@ export default function QuickQuotePage() {
         total_weight: totalWeight,
         total_cbm: totalCBM,
       };
-      console.log(payload);
+      console.log([payload, selectedCarrier]);
 
       const res = await fetch("/api/cargo-quote", {
         method: "POST",
@@ -425,7 +438,6 @@ export default function QuickQuotePage() {
             </div>
           </div>
         )}
-
         {/* ================= STEP 2 ================= */}
         {step === 2 && (
           <div className="flex flex-col gap-4">
@@ -451,130 +463,165 @@ export default function QuickQuotePage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {carriers.map((c, i) => {
-                  // FIX: Pastikan perbandingannya konsisten dengan state yang diupdate
+                {carriers.map((c: any, i: number) => {
                   const isSelected = selectedRateId === c.rate_id;
                   const isCheapest = i === 0;
 
+                  // LOGIKA UNIT - Pastikan mapping sesuai data source
+                  // ✅ PERBAIKAN: Gunakan cargoList, bukan cargos
+                  const uniqueUnits = Array.from(
+                    new Set(
+                      cargoList
+                        .map((item) => item.cargoUnit) // Ambil unit dari cargoList
+                        .filter(Boolean) // Buang yang kosong
+                        .map((u) => u.toUpperCase().trim()), // Standarisasi
+                    ),
+                  ).join(", "); // ✅ Pastikan .join ada di paling luar Array.from
+
+                  console.log("Unique Units String:", uniqueUnits);
+
                   return (
                     <div
-                      key={i}
-                      // FIX: Update kedua state saat diklik
+                      key={c.rate_id || i}
                       onClick={() => {
                         setSelectedCarrier(c);
                         setSelectedRateId(c.rate_id);
                       }}
                       className={`relative overflow-hidden flex flex-col md:flex-row items-center justify-between p-6 rounded-xl border-2 transition-all duration-300 
-                ${
-                  isSelected
-                    ? "border-blue-500 bg-blue-50/50 shadow-lg scale-[1.01]"
-                    : "border-white bg-white hover:border-gray-200 hover:shadow-md"
-                } cursor-pointer`}
+                        ${
+                          isSelected
+                            ? "border-blue-500 bg-blue-50/50 shadow-lg scale-[1.01]"
+                            : "border-white bg-white hover:border-gray-200 hover:shadow-md"
+                        } 
+                      cursor-pointer mb-4`}
                     >
                       {/* INDICATOR LINE */}
-                      <div
-                        className={`absolute left-0 top-0 bottom-0 w-1.5 ${isSelected ? "bg-blue-600" : "bg-transparent"}`}
-                      ></div>
+                      {isSelected && (
+                        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-blue-600"></div>
+                      )}
 
                       {/* SECTION 1: LOGO & IDENTITY */}
-                      <div className="flex items-center gap-6 w-full md:w-[30%]">
-                        <div className="space-x-2 w-34 bg-white rounded-lg flex items-center justify-center p-2 shadow-sm border border-gray-50">
+                      <div className="flex items-center gap-6 w-full md:w-[40%]">
+                        <div className="w-20 h-14 bg-white rounded-lg flex items-center justify-center p-2 shadow-sm border border-gray-50">
                           <img
                             src={`/assets/carrier_logo/${c.carrier_code}.webp`}
                             alt={c.name}
                             className="object-contain max-h-full w-full"
                             onError={(e) => {
                               (e.target as HTMLImageElement).src =
-                                "/assets/carrier_log/default.webp";
+                                "/assets/carrier_logo/default.webp";
                             }}
                           />
                         </div>
-                        <div className="w-full">
-                          <h3 className="font-black text-gray-900 text-2xl leading-none mb-1 uppercase italic tracking-tighter">
+                        <div className="flex flex-col md:w-[35%]">
+                          <h3 className="font-black text-gray-900 text-xl leading-none mb-1 uppercase italic tracking-tighter">
                             {c.name}
                           </h3>
-                          <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-bold">
-                            {c.carrier_code}
-                          </span>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-[9px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-bold uppercase">
+                              {c.carrier_code}
+                            </span>
+                            {uniqueUnits && (
+                              <span className="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded font-black uppercase shadow-sm tracking-tight">
+                                {uniqueUnits.length > 20
+                                  ? uniqueUnits.substring(0, 20) + "..."
+                                  : uniqueUnits}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex flex-col">
+                          <div className="text-left">
+                            <p className="text-xs font-bold text-gray-400 uppercase">
+                              Qty :
+                            </p>
+                            <p className="text-sm font-black  bg-blue-500 text-white px-2 py-0.5 rounded uppercase">
+                              {totalQty} Unit
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex flex-col">
+                          <div className="text-left">
+                            <p className="text-xs font-bold text-gray-400 uppercase">
+                              Weight :
+                            </p>
+                            <p className="text-sm font-black text-gray-900">
+                              {totalWeight} Kg
+                            </p>
+                          </div>
                         </div>
                       </div>
 
-                      {/* SECTION 2: TRANSIT VISUALIZER */}
-                      <div className="flex flex-1 items-center justify-center gap-4 md:gap-10 py-6 md:py-0 w-full">
+                      {/* SECTION 2: TRANSIT VISUALIZER (Berdasarkan Gambar Upload) */}
+                      <div className="flex flex-1 items-center justify-center gap-6 py-6 md:py-0 w-full px-4">
                         <div className="text-center">
-                          <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">
+                          <p className="text-[9px] font-bold text-gray-400 uppercase">
                             Pickup ETA
                           </p>
-                          <p className="text-sm font-bold text-gray-800">
-                            {c.pickup_eta}
+                          <p className="text-sm font-black text-gray-900">
+                            {c.pickup_eta} Days
                           </p>
                         </div>
 
-                        <div className="flex flex-col items-center min-w-[120px] md:min-w-[150px]">
-                          <div className="flex items-center w-full">
-                            <div className="h-2 w-2 rounded-full bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.5)]"></div>
-                            <div className="h-[2px] flex-1 bg-gradient-to-r from-blue-600 to-gray-300 relative">
-                              <div className="absolute inset-0 flex items-center justify-center">
-                                <span className="bg-white px-2 py-0.5 rounded-full border border-gray-100 text-[9px] font-black text-blue-600 uppercase tracking-tighter shadow-sm">
+                        <div className="flex flex-col items-center flex-1 max-w-[180px]">
+                          <div className="flex items-center w-full gap-1">
+                            <div className="h-2 w-2 rounded-full bg-blue-600"></div>
+                            <div className="h-[2px] flex-1 border-t-2 border-dashed border-gray-300 relative">
+                              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-white border border-blue-100 px-2 py-0.5 rounded-full shadow-sm">
+                                <span className="text-[8px] font-black text-blue-600 uppercase">
                                   Transit
                                 </span>
                               </div>
                             </div>
                             <div className="h-2 w-2 rounded-full bg-gray-300"></div>
                           </div>
-                          <p className="text-[10px] text-gray-400 font-bold mt-2 uppercase tracking-widest">
+                          <p className="text-[10px] text-gray-400 font-bold mt-4 uppercase tracking-tighter">
                             Express Service
                           </p>
                         </div>
 
                         <div className="text-center">
-                          <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">
+                          <p className="text-[9px] font-bold text-gray-400 uppercase">
                             Delivery ETA
                           </p>
-                          <p className="text-sm font-bold text-gray-800">
-                            {c.delivery_eta}
+
+                          <p className="text-sm font-black text-gray-900">
+                            {c.delivery_eta} Days
                           </p>
                         </div>
                       </div>
 
-                      {/* SECTION 3: PRICING & SELECTION */}
+                      {/* SECTION 3: PRICING */}
                       <div className="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end border-t md:border-0 pt-4 md:pt-0">
-                        <div className="text-right flex flex-col justify-center">
+                        <div className="text-right">
                           {isCheapest && (
-                            <div className="mb-1">
-                              <span className="text-[9px] font-black bg-green-500 text-white px-2 py-0.5 rounded-md uppercase animate-pulse">
-                                Best Rate
-                              </span>
-                            </div>
+                            <span className="text-[8px] font-black bg-green-500 text-white px-2 py-0.5 rounded uppercase mb-1 inline-block">
+                              Best Rate
+                            </span>
                           )}
-                          <div className="flex items-baseline justify-end gap-1">
-                            <span className="text-xl font-bold text-gray-900">
+                          <div className="flex items-baseline justify-end">
+                            <span className="text-sm font-bold text-gray-900 mr-0.5">
                               $
                             </span>
                             <span className="text-3xl font-black text-gray-900 tracking-tighter">
-                              {Number(c.price).toLocaleString("id-ID")}
+                              {Number(c.price).toFixed(2)}
                             </span>
                           </div>
-                          <p className="text-[10px] font-bold text-blue-600 uppercase tracking-tight">
+                          <p className="text-[9px] font-bold text-blue-600 uppercase">
                             Price All-in
                           </p>
                         </div>
 
-                        <div
-                          className={`flex items-center justify-center h-12 w-12 md:h-14 md:w-32 rounded-xl font-bold text-sm transition-all duration-300 border-2
-                    ${
-                      isSelected
-                        ? "bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200"
-                        : "bg-white border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white"
-                    }`}
+                        <button
+                          className={`h-12 px-6 rounded-xl font-bold text-sm transition-all border-2 
+            ${
+              isSelected
+                ? "bg-blue-600 border-blue-600 text-white shadow-md"
+                : "bg-white border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white"
+            }`}
                         >
-                          <span className="hidden md:inline">
-                            {isSelected ? "SELECTED" : "SELECT"}
-                          </span>
-                          <span className="md:hidden">
-                            {isSelected ? "✓" : "+"}
-                          </span>
-                        </div>
+                          {isSelected ? "SELECTED" : "SELECT"}
+                        </button>
                       </div>
                     </div>
                   );
@@ -583,7 +630,6 @@ export default function QuickQuotePage() {
             )}
           </div>
         )}
-
         {/* ================= STEP 3 ================= */}
         {step === 3 && (
           <div className="space-y-6 bg-white p-6 rounded-2xl shadow">
