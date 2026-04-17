@@ -27,7 +27,7 @@ export const config = {
     "/login",
     "/dashboard/:path*",
     "/quote/:path*",
-    "/api/:path*",
+    // "/api/:path*",
     "/jobs/:path*",
   ],
 };
