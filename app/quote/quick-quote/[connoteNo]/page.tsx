@@ -132,12 +132,40 @@ export default function QuickQuotePage() {
   ]);
 
   // 🔥 FIX DISINI (TYPE SAFE)
+  // 🔥 EDIT FUNCTION INI
   const handleChange = <K extends keyof Cargo>(
     index: number,
     field: K,
     value: Cargo[K],
   ) => {
     const updated = [...cargoList];
+
+    // 1. Logika Validasi Weight untuk Unit Box
+    if (field === "weight") {
+      const currentUnit = updated[index].cargoUnit;
+      const weightValue = parseFloat(value as string);
+
+      if (currentUnit === "box" && weightValue > 30) {
+        // Tampilkan alert/toast
+        alert("Maximum weight for Box is 30kg");
+
+        // Paksa nilai menjadi 30
+        updated[index][field] = "30" as Cargo[K];
+        setCargoList(updated);
+        return; // Stop eksekusi agar tidak tertimpa value asli
+      }
+    }
+
+    // 2. Logika Tambahan: Jika Unit diubah ke Box, cek weight yang sudah ada
+    if (field === "cargoUnit" && value === "box") {
+      const currentWeight = parseFloat(updated[index].weight || "0");
+      if (currentWeight > 30) {
+        alert("Weight adjusted to 30kg for Box unit");
+        updated[index].weight = "30";
+      }
+    }
+
+    // Set value normal untuk field lainnya
     updated[index][field] = value;
     setCargoList(updated);
   };
@@ -403,92 +431,108 @@ export default function QuickQuotePage() {
                 </button>
               </div>
 
-              {cargoList.map((cargo, index) => (
-                <div
-                  key={index}
-                  className="grid md:grid-cols-7 gap-4 mb-4 border p-4 rounded-xl"
-                >
-                  <div className="grid grid-cols-2 gap-2 md:col-span-3">
-                    <SelectField
-                      label="Temperature *"
-                      value={cargo.cargoTemp}
-                      name="cargoTemp" // ✅ TAMBAH
-                      onChange={(val) => handleChange(index, "cargoTemp", val)}
-                      options={[
-                        { label: "Frozen", value: "frozen" },
-                        { label: "Chilled", value: "chilled" },
-                      ]}
-                    />
-                    <SelectField
-                      label="Unit *"
-                      name="cargoUnit" // ✅ TAMBAH
-                      value={cargo.cargoUnit}
-                      onChange={(val) => handleChange(index, "cargoUnit", val)}
-                      options={[
-                        { label: "Pallet", value: "pallet" },
-                        { label: "Box", value: "box" },
-                      ]}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 md:col-span-2">
-                    <InputField
-                      label="Qty"
-                      name="qty" // ✅ TAMBAH
-                      value={cargo.qty}
-                      onChange={(e) =>
-                        handleChange(index, "qty", e.target.value)
-                      }
-                    />
-                    <InputField
-                      label="Weight (kg)"
-                      name="weight" // ✅ TAMBAH
-                      value={cargo.weight}
-                      onChange={(e) =>
-                        handleChange(index, "weight", e.target.value)
-                      }
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-2 md:col-span-2">
-                    <InputField
-                      label="Length (cm)*"
-                      name="length" // ✅ TAMBAH
-                      value={cargo.length}
-                      onChange={(e) =>
-                        handleChange(index, "length", e.target.value)
-                      }
-                    />
-                    <InputField
-                      label="Width (cm)*"
-                      name="width" // ✅ TAMBAH
-                      value={cargo.width}
-                      onChange={(e) =>
-                        handleChange(index, "width", e.target.value)
-                      }
-                    />
-                    <InputField
-                      label="Height (cm)*"
-                      name="height" // ✅ TAMBAH
-                      value={cargo.height}
-                      onChange={(e) =>
-                        handleChange(index, "height", e.target.value)
-                      }
-                    />
-                  </div>
-
-                  {cargoList.length > 1 && (
-                    <div className="md:col-span-7 text-right">
-                      <button
-                        onClick={() => handleRemoveCargo(index)}
-                        className="text-red-500 text-sm"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  )}
+              <div className="bg-white p-6 rounded-2xl shadow">
+                <div className="flex justify-between mb-4">
+                  <h2 className="font-semibold">Cargo</h2>
+                  <button
+                    onClick={handleAddCargo}
+                    className="bg-yellow-400 text-white px-3 py-1 rounded-lg"
+                  >
+                    + Add List
+                  </button>
                 </div>
-              ))}
+
+                {cargoList.map((cargo, index) => (
+                  <div
+                    key={index}
+                    className="grid md:grid-cols-7 gap-4 mb-4 border p-4 rounded-xl"
+                  >
+                    <div className="grid grid-cols-2 gap-2 md:col-span-3">
+                      <SelectField
+                        label="Temperature *"
+                        name="cargoTemp"
+                        value={cargo.cargoTemp}
+                        onChange={(val) =>
+                          handleChange(index, "cargoTemp", val)
+                        }
+                        options={[
+                          { label: "Frozen", value: "frozen" },
+                          { label: "Chilled", value: "chilled" },
+                        ]}
+                      />
+                      <SelectField
+                        label="Unit *"
+                        name="cargoUnit"
+                        value={cargo.cargoUnit}
+                        onChange={(val) =>
+                          handleChange(index, "cargoUnit", val)
+                        }
+                        options={[
+                          { label: "Pallet", value: "pallet" },
+                          { label: "Box", value: "box" },
+                        ]}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 md:col-span-2">
+                      <InputField
+                        label="Qty *"
+                        name="qty"
+                        value={cargo.qty}
+                        onChange={(e) =>
+                          handleChange(index, "qty", e.target.value)
+                        }
+                      />
+                      <InputField
+                        name="weight"
+                        label="Weight (kg)*"
+                        value={cargo.weight}
+                        onChange={(e) =>
+                          handleChange(index, "weight", e.target.value)
+                        }
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 md:col-span-2">
+                      <InputField
+                        name="length"
+                        label="Length (cm)*"
+                        value={cargo.length}
+                        onChange={(e) =>
+                          handleChange(index, "length", e.target.value)
+                        }
+                      />
+                      <InputField
+                        name="width"
+                        label="Width (cm)*"
+                        value={cargo.width}
+                        onChange={(e) =>
+                          handleChange(index, "width", e.target.value)
+                        }
+                      />
+                      <InputField
+                        name="height"
+                        label="Height (cm)*"
+                        value={cargo.height}
+                        onChange={(e) =>
+                          handleChange(index, "height", e.target.value)
+                        }
+                      />
+                    </div>
+
+                    {cargoList.length > 1 && (
+                      <div className="md:col-span-7 text-right">
+                        <button
+                          onClick={() => handleRemoveCargo(index)}
+                          className="text-red-500 text-sm"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
