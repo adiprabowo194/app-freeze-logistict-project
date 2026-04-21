@@ -86,12 +86,40 @@ export default function QuickQuotePage() {
   ]);
 
   // 🔥 FIX DISINI (TYPE SAFE)
+  // 🔥 EDIT FUNCTION INI
   const handleChange = <K extends keyof Cargo>(
     index: number,
     field: K,
     value: Cargo[K],
   ) => {
     const updated = [...cargoList];
+
+    // 1. Logika Validasi Weight untuk Unit Box
+    if (field === "weight") {
+      const currentUnit = updated[index].cargoUnit;
+      const weightValue = parseFloat(value as string);
+
+      if (currentUnit === "box" && weightValue > 30) {
+        // Tampilkan alert/toast
+        alert("Maximum weight for Box is 30kg");
+
+        // Paksa nilai menjadi 30
+        updated[index][field] = "30" as Cargo[K];
+        setCargoList(updated);
+        return; // Stop eksekusi agar tidak tertimpa value asli
+      }
+    }
+
+    // 2. Logika Tambahan: Jika Unit diubah ke Box, cek weight yang sudah ada
+    if (field === "cargoUnit" && value === "box") {
+      const currentWeight = parseFloat(updated[index].weight || "0");
+      if (currentWeight > 30) {
+        alert("Weight adjusted to 30kg for Box unit");
+        updated[index].weight = "30";
+      }
+    }
+
+    // Set value normal untuk field lainnya
     updated[index][field] = value;
     setCargoList(updated);
   };
