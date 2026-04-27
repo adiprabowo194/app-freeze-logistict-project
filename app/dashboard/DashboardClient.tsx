@@ -13,6 +13,7 @@ import StatusBadge from "@/components/StatusBadge";
 import Pagination from "@/components/Pagination";
 import TopNavbar from "@/components/TopNavbar";
 import MenuBars from "@/components/MenuBars";
+import InputField from "@/components/InputField";
 
 // 📦 TYPES
 interface Booking {
@@ -88,6 +89,7 @@ export default function DashboardClient() {
 
     const payload = {
       enquiry: (form.enquiry as HTMLInputElement).value,
+      connote_no: (form.connote_no as HTMLInputElement).value,
     };
 
     try {
@@ -260,8 +262,14 @@ export default function DashboardClient() {
               {/* inquery message*/}
               <h2 className="text-2xl mb-4 font-semibold">Enquiry</h2>
               <form onSubmit={handleSubmit} className="space-y-4">
+                <InputField
+                  type="text"
+                  label="Connote Number"
+                  name="connote_no"
+                  required={true}
+                />
                 <TextareaField
-                  rows={8}
+                  rows={5}
                   label="Your Question"
                   name="enquiry"
                   required={true}

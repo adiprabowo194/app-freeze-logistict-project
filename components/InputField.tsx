@@ -12,6 +12,7 @@ type InputFieldProps = {
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   readOnly?: boolean;
   disabled?: boolean;
+  min?: string | number; // ✅ Tambahkan min di sini (opsional)
 };
 
 const InputField: React.FC<InputFieldProps> = ({
@@ -26,6 +27,7 @@ const InputField: React.FC<InputFieldProps> = ({
   onChange,
   readOnly = false,
   disabled = false,
+  min, // ✅ Ambil dari props
 }) => {
   // 🔥 cek controlled / uncontrolled
   const isControlled = value !== undefined;
@@ -44,6 +46,7 @@ const InputField: React.FC<InputFieldProps> = ({
         type={type}
         placeholder={placeholder}
         required={required}
+        min={min} // ✅ Pasang di sini, jika undefined input HTML akan mengabaikannya
         {...(isControlled ? { value } : {})} // ✅ controlled
         {...(!isControlled ? { defaultValue: "" } : {})} // ✅ uncontrolled
         onChange={onChange}

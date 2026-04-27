@@ -43,11 +43,11 @@ const Home: React.FC = () => {
           router.push("/dashboard");
         }, 500);
       } else {
-        toast.error(result.message || "Login gagal");
+        toast.error(result.message || "Login failed");
       }
     } catch (error) {
       console.error(error);
-      toast.error("Terjadi kesalahan");
+      toast.error("Login failed");
     } finally {
       setLoading(false);
     }

@@ -320,6 +320,12 @@ export default function QuickQuotePage() {
     }
   };
 
+  // Fungsi bantuan untuk mendapatkan format YYYY-MM-DD
+  const getTomorrowDate = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split("T")[0];
+  };
   return (
     <div className="bg-gray-50 min-h-screen">
       <TopNavbar />
@@ -864,8 +870,12 @@ export default function QuickQuotePage() {
                   type="date"
                   label="Pickup Date *"
                   value={pickupDate}
+                  // onChange={(e) => setPickupDate(e.target.value)}
                   onChange={(e) => setPickupDate(e.target.value)}
+                  // Opsional: tambahkan 'min' agar user tidak bisa pilih tanggal sebelum besok
+                  min={getTomorrowDate()}
                 />
+
                 <InputField
                   name="receiverName"
                   label="Receiver Name *"
